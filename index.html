@@ -64,7 +64,7 @@ nav.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(-
 .row{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
 .row>*{min-width:0}
 label.f{display:flex;flex-direction:column;gap:4px;font-size:14px;color:var(--muted);flex:1 1 180px}
-input[type=text],input[type=number],input[type=date],select,textarea{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;color:var(--ink);width:100%}
+input[type=text],input[type=password],input[type=number],input[type=date],select,textarea{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;color:var(--ink);width:100%}
 textarea{min-height:64px;resize:vertical}
 .btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 16px;cursor:pointer;font-weight:600}
 .btn.pri{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
@@ -204,7 +204,7 @@ const ASTAT={pending:'รอดำเนินการ',screened:'คัดก�
 /* ---------- shell ---------- */
 function renderShell(){
   const rb=$('#roles');rb.className='userbar';
-  rb.innerHTML=S.me?`<span class="note"><b>${esc(S.me.name)}</b> · ${ROLES[S.role]}</span><button class="btn sm" data-logout="1">ออกจากระบบ</button>`:'';
+  rb.innerHTML=S.me?`<span class="note"><b>${esc(S.me.name)}</b> · ${ROLES[S.role]}</span>${S.role==='officer'?'<button class="btn sm" data-setpw="1">ตั้งรหัสผ่าน</button>':''}<button class="btn sm" data-logout="1">ออกจากระบบ</button>`:'';
   if(!S.me){$('#tabs').innerHTML='';return}
   if(!TABS[S.role].some(t=>t[0]===S.tab))S.tab=TABS[S.role][0][0];
   $('#tabs').innerHTML=TABS[S.role].map(([k,v])=>`<button role="tab" data-tab="${k}" aria-selected="${S.tab===k}">${v}</button>`).join('');
@@ -652,7 +652,13 @@ function gateCard(inner){return `<div class="card stack" style="max-width:520px;
 function loginGate(){return gateCard(`<h2>เข้าสู่ระบบ</h2>
   <div class="note">กรอกอีเมลที่เจ้าหน้าที่ลงทะเบียนไว้ ระบบจะส่งลิงก์เข้าสู่ระบบไปให้ทางอีเมล (ไม่ต้องใช้รหัสผ่าน) เปิดลิงก์บนเครื่องนี้เพื่อเข้าใช้งาน</div>
   <label class="f" style="flex:none">อีเมล<input type="text" id="lgEmail" inputmode="email" autocomplete="email" placeholder="name@example.com"></label>
-  <div><button class="btn pri" id="lgGo">ส่งลิงก์เข้าสู่ระบบ</button></div><div id="lgMsg" class="note" role="status"></div>`)}
+  <div><button class="btn pri" id="lgGo">ส่งลิงก์เข้าสู่ระบบ</button></div><div id="lgMsg" class="note" role="status">${esc(S.loginNote||'')}</div>
+  <details class="stack" style="margin-top:6px"><summary class="note" style="cursor:pointer">เจ้าหน้าที่ผู้ดูแลระบบ: เข้าด้วยรหัสผ่าน</summary>
+    <label class="f" style="flex:none">อีเมล<input type="text" id="pwEmail" inputmode="email" autocomplete="username" placeholder="name@example.com"></label>
+    <label class="f" style="flex:none">รหัสผ่าน<input type="password" id="pwPass" autocomplete="current-password"></label>
+    <div><button class="btn" id="pwGo">เข้าสู่ระบบด้วยรหัสผ่าน</button></div><div id="pwMsg" class="note" role="status"></div>
+    <div class="note">ใช้ได้เฉพาะบัญชีเจ้าหน้าที่ที่ตั้งรหัสผ่านไว้แล้ว ถ้ายังไม่เคยตั้ง ให้เข้าด้วยลิงก์อีเมลก่อน แล้วกด "ตั้งรหัสผ่าน" มุมขวาบน</div>
+  </details>`)}
 function noAccessGate(why){return gateCard(`<h2>ยังไม่ได้รับสิทธิ์ใช้งาน</h2>
   <div class="note">บัญชีนี้ล็อกอินได้ แต่ยังไม่ได้กำหนดบทบาท หรือถูกปิดการใช้งาน กรุณาแจ้งเจ้าหน้าที่ผู้ดูแลระบบ${why?'<br>('+esc(why)+')':''}</div>
   <div><button class="btn" data-logout="1">ออกจากระบบ</button></div>`)}
@@ -669,8 +675,42 @@ function bindGate(){
     if(error)msg.textContent=/signups? not allowed|not found/i.test(error.message)?'อีเมลนี้ยังไม่ได้ลงทะเบียน กรุณาแจ้งเจ้าหน้าที่':'ส่งลิงก์ไม่สำเร็จ: '+error.message;
     else msg.textContent='ส่งลิงก์ไปที่ '+email+' แล้ว เปิดอีเมลและกดลิงก์บนเครื่องนี้ (ตรวจในกล่องสแปมด้วย)'};
   go.onclick=send;$('#lgEmail').onkeydown=e=>{if(e.key==='Enter')send()};
+  const pg=$('#pwGo');
+  if(pg){const pwSend=async()=>{
+    const email=$('#pwEmail').value.trim().toLowerCase(),pass=$('#pwPass').value,m=$('#pwMsg');
+    if(!/^\S+@\S+\.\S+$/.test(email)||!pass){m.textContent='กรุณากรอกอีเมลและรหัสผ่าน';return}
+    pg.disabled=true;m.textContent='กำลังเข้าสู่ระบบ…';pwLogin=true;S.loginNote='';
+    const {error}=await sb.auth.signInWithPassword({email,password:pass});
+    pg.disabled=false;
+    if(error){pwLogin=false;m.textContent='อีเมลหรือรหัสผ่านไม่ถูกต้อง'}
+  };pg.onclick=pwSend;$('#pwPass').onkeydown=e=>{if(e.key==='Enter')pwSend()}}
 }
-document.addEventListener('click',e=>{if(e.target.closest('[data-logout]')&&sb)sb.auth.signOut()});
+/* ตั้ง/เปลี่ยนรหัสผ่าน (เฉพาะเจ้าหน้าที่) : ผู้ใช้พิมพ์เอง ไม่เก็บรหัสไว้ที่ใด */
+function openSetPw(){
+  if(!sb||S.role!=='officer'||document.getElementById('pwDlg'))return;
+  const d=document.createElement('div');d.id='pwDlg';
+  d.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50';
+  d.innerHTML=`<div class="card stack" role="dialog" aria-modal="true" aria-label="ตั้งรหัสผ่าน" style="max-width:420px;width:100%">
+    <h2>ตั้ง/เปลี่ยนรหัสผ่าน</h2>
+    <div class="note">ตั้งอย่างน้อย 12 ตัวอักษร ควรผสมตัวอักษร ตัวเลข และสัญลักษณ์ อย่าใช้ซ้ำกับบริการอื่น</div>
+    <label class="f" style="flex:none">รหัสผ่านใหม่<input type="password" id="npA" autocomplete="new-password"></label>
+    <label class="f" style="flex:none">พิมพ์รหัสผ่านใหม่อีกครั้ง<input type="password" id="npB" autocomplete="new-password"></label>
+    <div id="npMsg" class="note" role="status"></div>
+    <div class="row"><button class="btn pri" id="npGo">บันทึกรหัสผ่าน</button><button class="btn" id="npX">ยกเลิก</button></div></div>`;
+  document.body.appendChild(d);
+  const close=()=>d.remove();$('#npX').onclick=close;$('#npA').focus();
+  $('#npGo').onclick=async()=>{
+    const a=$('#npA').value,b=$('#npB').value,m=$('#npMsg');
+    if(a.length<12){m.textContent='รหัสผ่านต้องยาวอย่างน้อย 12 ตัวอักษร';return}
+    if(a!==b){m.textContent='รหัสผ่านสองครั้งไม่ตรงกัน';return}
+    $('#npGo').disabled=true;m.textContent='กำลังบันทึก…';
+    const {error}=await sb.auth.updateUser({password:a});
+    if(error){$('#npGo').disabled=false;m.textContent='บันทึกไม่สำเร็จ: '+error.message;return}
+    close();toast('ตั้งรหัสผ่านเรียบร้อย ครั้งต่อไปเข้าด้วยรหัสผ่านได้');
+  };
+}
+document.addEventListener('click',e=>{if(e.target.closest('[data-logout]')&&sb)sb.auth.signOut();if(e.target.closest('[data-setpw]'))openSetPw()});
+let pwLogin=false;
 
 function stopSubs(){subsOff.forEach(f=>{try{f()}catch(e){}});subsOff=[]}
 async function handleSession(session){
@@ -682,6 +722,8 @@ async function handleSession(session){
   const {data,error}=await sb.from('staff').select('role,display_name,active').eq('user_id',uid).maybeSingle();
   if(uid!==curUid)return;
   if(error||!data||!data.active){S.gate=noAccessGate(error&&error.message);S.ready=true;render();return}
+  if(pwLogin&&data.role!=='officer'){pwLogin=false;S.loginNote='เข้าด้วยรหัสผ่านได้เฉพาะเจ้าหน้าที่ผู้ดูแลระบบ กรุณาใช้ลิงก์ทางอีเมล';sb.auth.signOut();return}
+  pwLogin=false;
   S.me={name:data.display_name||session.user.email||'',dbRole:data.role};
   S.role=ROLE_UI[data.role];S.tab=TABS[S.role][0][0];S.canWrite=true;
   db=makeDb(sb);
