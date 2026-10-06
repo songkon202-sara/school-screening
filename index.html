@@ -1,0 +1,705 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<title>คัดกรอง 4 กลุ่มโรคและสมาธิสั้น</title>
+<style>:root{color-scheme:light}body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@500;600&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: sticky top bar (role switcher) + tab row, single centered column of work cards (max 1040px). */
+:root{
+  --bg:#f1f5f6; --surface:#ffffff; --ink:#15282f; --muted:#587078; --line:#d6e0e3;
+  --accent:#0b7a75; --accent-ink:#ffffff; --accent-soft:#dcf0ee;
+  --warn:#a9500a; --warn-soft:#fdeedb;
+  --bad:#b0281d; --bad-soft:#fde6e3;
+  --ok:#17794a; --ok-soft:#e0f3e8;
+  --info:#2556a8; --info-soft:#e5ecfa;
+  --f-head:"Prompt","Sarabun",system-ui,sans-serif;
+  --f-body:"Sarabun","Noto Sans Thai",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e191d; --surface:#152327; --ink:#e5eef0; --muted:#94a9b0; --line:#294046;
+  --accent:#43c4ba; --accent-ink:#06201e; --accent-soft:#12383a;
+  --warn:#f0b15a; --warn-soft:#3a2a11;
+  --bad:#ff9288; --bad-soft:#3e1b18;
+  --ok:#64d89a; --ok-soft:#123323;
+  --info:#8fb5ff; --info-soft:#172a4e; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e191d; --surface:#152327; --ink:#e5eef0; --muted:#94a9b0; --line:#294046;
+  --accent:#43c4ba; --accent-ink:#06201e; --accent-soft:#12383a;
+  --warn:#f0b15a; --warn-soft:#3a2a11;
+  --bad:#ff9288; --bad-soft:#3e1b18;
+  --ok:#64d89a; --ok-soft:#123323;
+  --info:#8fb5ff; --info-soft:#172a4e; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.55}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3{font-family:var(--f-head);font-weight:600;margin:0;line-height:1.3;text-wrap:balance}
+.wrap{max-width:1040px;margin:0 auto;padding-inline:16px;padding-block:16px 48px}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+.top-in{max-width:1040px;margin:0 auto;padding:10px 16px 0;display:flex;flex-direction:column;gap:10px}
+.brand{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;justify-content:space-between}
+.brand h1{font-size:18px}
+.brand small{color:var(--muted);font-size:13px}
+.userbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.roles{display:inline-flex;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px;flex-wrap:wrap}
+.roles button{border:0;background:transparent;padding:6px 14px;border-radius:8px;cursor:pointer;font-weight:500;color:var(--muted)}
+.roles button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+nav.tabs{display:flex;gap:4px;overflow-x:auto}
+nav.tabs button{border:0;background:transparent;padding:8px 14px;cursor:pointer;color:var(--muted);font-weight:500;border-bottom:3px solid transparent;white-space:nowrap}
+nav.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+:focus-visible{outline:3px solid var(--info);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px}
+.stack{display:flex;flex-direction:column;gap:16px}
+.row{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
+.row>*{min-width:0}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:14px;color:var(--muted);flex:1 1 180px}
+input[type=text],input[type=number],input[type=date],select,textarea{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;color:var(--ink);width:100%}
+textarea{min-height:64px;resize:vertical}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 16px;cursor:pointer;font-weight:600}
+.btn.pri{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.sm{padding:4px 10px;font-size:14px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.muted{color:var(--muted)}
+.nw,td .btn{white-space:nowrap}
+@media (max-width:600px){header.top{position:static}.brand h1{font-size:16px}.roles button{padding:6px 10px;font-size:14px}.card{padding:14px}.kpi b{font-size:26px}}
+.pill{display:inline-block;padding:1px 10px;border-radius:99px;font-size:13px;font-weight:600;white-space:nowrap}
+.p-bad{background:var(--bad-soft);color:var(--bad)}
+.p-warn{background:var(--warn-soft);color:var(--warn)}
+.p-ok{background:var(--ok-soft);color:var(--ok)}
+.p-info{background:var(--info-soft);color:var(--info)}
+.p-mute{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px}
+.kpi b{display:block;font-family:var(--f-head);font-size:30px;line-height:1.1;font-variant-numeric:tabular-nums}
+.kpi span{font-size:14px;color:var(--muted)}
+.tblw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:13px;color:var(--muted);font-weight:600;white-space:nowrap}
+.bar{height:10px;background:var(--bg);border:1px solid var(--line);border-radius:6px;overflow:hidden;display:flex;min-width:120px}
+.bar i{display:block;height:100%}
+.sec{border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.sec>h3{padding:10px 14px;background:var(--bg);font-size:16px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center}
+.q{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;justify-content:space-between;padding:10px 14px;border-top:1px solid var(--line)}
+.q .t{flex:1 1 300px;min-width:0}
+.q .t em{font-style:normal;color:var(--muted);margin-right:6px;font-variant-numeric:tabular-nums}
+.opts{display:flex;gap:6px;flex-wrap:wrap}
+.opts label{position:relative;cursor:pointer}
+.opts input{position:absolute;opacity:0;inset:0}
+.opts span{display:block;padding:4px 12px;border:1px solid var(--line);border-radius:8px;font-size:14px;background:var(--bg);user-select:none}
+.opts input:checked+span{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+.opts input:focus-visible+span{outline:3px solid var(--info);outline-offset:2px}
+.res{border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.res.bad{background:var(--bad-soft)}.res.ok{background:var(--ok-soft)}.res.warn{background:var(--warn-soft)}
+.empty{text-align:center;padding:28px 16px;color:var(--muted)}
+.note{font-size:14px;color:var(--muted)}
+.flagrow{display:flex;gap:4px;flex-wrap:wrap}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:10px;z-index:9;font-weight:600}
+@media (prefers-reduced-motion:no-preference){.card,.kpi{transition:border-color .15s}}
+</style>
+
+<header class="top"><div class="top-in">
+  <div class="brand">
+    <div><h1>แบบคัดกรอง 4 กลุ่มโรคและสมาธิสั้น</h1><small>แบบสังเกตพฤติกรรม 4 โรค · SNAP-IV · สรุปผลการดำเนินการ</small></div>
+    <div class="roles" id="roles" role="group" aria-label="เลือกบทบาทผู้ใช้งาน"></div>
+  </div>
+  <nav class="tabs" id="tabs" role="tablist"></nav>
+</div></header>
+<main class="wrap" id="app"><div class="empty">กำลังโหลดข้อมูล…</div></main>
+<div id="toast" class="toast" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+/* ---------- แบบสอบถาม (ข้อความตามฉบับจริง) ---------- */
+const OBS=[
+ {key:'slow',title:'1. ภาวะเรียนรู้ช้า',from:1,items:[
+  'เรียนรู้บทเรียนได้ช้ากว่าบุคคลอื่นในห้อง','ลืมง่าย จำในสิ่งที่เพิ่งเรียนไปไม่ได้ ต้องเรียนซ้ำๆ','กล้ามเนื้อมือไม่แข็งแรง ทำงานที่ใช้มือดูงุ่มง่าม','สรุปใจความสำคัญของเนื้อหาที่เรียนไม่ได้','ไหวพริบในการแก้ปัญหาเฉพาะหน้าไม่สมวัย','ตอบสนองต่อสิ่งต่าง ๆ ช้า','ชอบเล่นกับเด็กที่มีอายุน้อยกว่า','ช่วยเหลือตนเองในกิจวัตรประจำวันได้น้อย','การใช้ภาษาไม่สมวัย','เล่นไม่ค่อยทันเพื่อน']},
+ {key:'ld',title:'2. ภาวะแอลดี (LD)',from:11,items:[
+  'ดูฉลาดหรือปกติในด้านอื่นๆ ยกเว้นเรื่องเรียน','อ่านผิดบ่อย ๆ อ่านไม่คล่อง หรืออ่านไม่ได้','อ่านข้ามคำ อ่านเพิ่มคำ','อ่านแล้วจับใจความสำคัญไม่ได้','เขียนพยัญชนะหรือตัวเลขที่คล้ายกันสลับกัน เช่น ม - น, ด - ค','เขียนผิด เขียนไม่คล่องบ่อย ๆ','สะกดคำตามการผสมเสียงไม่ได้ เขียนคำต่างๆ จากการจำ','ไม่เข้าใจค่าของจำนวน เช่น หน่วย สิบ ร้อย พัน หมื่น','คำนวณ บวก ลบ คูณ หาร ไม่ได้','ไม่เข้าใจหลักการพื้นฐานทางคณิตศาสตร์ เช่น สัญลักษณ์ เวลา ทิศทาง ขนาด ระยะทาง การจัดลำดับ การเปรียบเทียบ']},
+ {key:'adhd',title:'3. ภาวะสมาธิสั้น',from:21,items:[
+  'ซนมาก อยู่ไม่นิ่ง ยุกยิกตลอดเวลา','พูดมาก','ชอบลุกจากที่นั่งเวลาอยู่ในห้องเรียน','เหม่อบ่อย ๆ ใจลอย ต้องคอยเรียก','ขี้ลืม ของใช้ส่วนตัวหายบ่อย ๆ','ทำงานไม่เรียบร้อย ไม่รอบคอบ','ไม่มีสมาธิในการทำงาน หรือทำได้เพียงช่วงสั้น ๆ','ทำงานช้า ทำงานไม่เสร็จ แต่ถ้ามีคนประกบจะทำได้เร็วขึ้น','รอคอยไม่ได้','ใจร้อน ควบคุมอารมณ์ไม่ค่อยได้']},
+ {key:'autism',title:'4. ภาวะออทิสติก',from:31,items:[
+  'ชอบแยกตัวอยู่คนเดียว','สบตาเพียงช่วงสั้น ๆ หรือไม่สบตา เวลาพูดกับคนอื่น','เมื่อเล่นกับเด็กอื่นๆ ไม่เข้าใจกติกา ไม่เข้าใจวิธีการเล่น','ไม่มีเพื่อนสนิท หรือมีเพื่อนน้อย','ไม่สามารถร่วมสนทนากับเพื่อน หรือไม่สามารถต่อบทสนทนากับผู้อื่นได้','มีระดับการใช้ภาษาที่ต่ำกว่าวัย','มักพูดแต่สิ่งที่ตนเองสนใจ ไม่สนใจเมื่อเพื่อนพูดเรื่องอื่นๆ','ไม่เข้าใจมุขตลก คำพังเพย คำประชด','ไม่ชอบการเปลี่ยนแปลง ชอบทำกิจวัตรเดิมๆซ้ำๆ','มีพฤติกรรมกระตุ้นตนเอง สะบัดมือ เล่นมือ']}
+];
+const OBS_CUT=6;
+const OBS_NEXT={
+ slow:'ให้คัดกรองด้วยแบบคัดกรองของ สพฐ. ต่อไป (ปัญหาการเรียนจากระดับสติปัญญาต่ำกว่าเกณฑ์)',
+ ld:'ให้คัดกรองด้วยแบบคัดกรองของ สพฐ. ต่อไป (แนวโน้มแอลดี)',
+ adhd:'ให้คัดกรองด้วยแบบคัดกรอง SNAP-IV ต่อไป',
+ autism:'ให้คัดกรองด้วยแบบคัดกรอง PDDSQ ต่อไป'};
+const COND={slow:'เรียนรู้ช้า',ld:'แอลดี (LD)',adhd:'สมาธิสั้น',autism:'ออทิสติก',odd:'ดื้อต่อต้าน'};
+const COND_KEYS=['slow','ld','adhd','autism','odd'];
+
+const SNAP=[
+ {key:'inatt',title:'อาการขาดสมาธิ',items:['มักไม่ละเอียดรอบคอบหรือสะเพร่าในการทำงานต่าง ๆ เช่น การบ้าน','ทำอะไรนาน ๆ ไม่ได้','ดูเหมือนไม่ค่อยฟังเวลามีคนพูดด้วย','มักทำการบ้านไม่เสร็จ หรือทำงานที่ได้รับมอบหมายไม่สำเร็จ','จัดระเบียบงานและกิจกรรมต่างๆ ไม่เป็น','มักหลีกเลี่ยงกิจกรรมที่ต้องใช้ความอดทนในการทำให้สำเร็จ','ทำของหายบ่อย ๆ (เช่น ของเล่น สมุดจดงาน เครื่องเขียน)','วอกแวกง่าย','ขี้ลืม'],cut:{T:18,P:16}},
+ {key:'hyper',title:'อาการอยู่ไม่นิ่ง/หุนหันพลันแล่น',items:['มือเท้ายุกยิก นั่งบิดไปมา','นั่งไม่ติดที่ ชอบลุกจากที่นั่งในชั้นเรียน หรือจากที่ที่ควรจะนั่งเรียบร้อย','วิ่งหรือปีนป่ายมากเกินควรอย่างไม่รู้กาลเทศะ','เล่นหรือทำกิจกรรมเงียบ ๆ ไม่เป็น','พร้อมจะเคลื่อนไหวอยู่เสมอเหมือนติดเครื่องอยู่ตลอดเวลา','พูดมาก','มักโพล่งคำตอบออกมาก่อนจะฟังคำถามจบ','ไม่ชอบรอคิว','ชอบสอดแทรกผู้อื่น เช่น ชอบพูดแทรกขณะผู้ใหญ่กำลังสนทนากัน'],cut:{T:11,P:14}},
+ {key:'odd',title:'อาการดื้อต่อต้าน',items:['อารมณ์เสียง่าย','ชอบโต้เถียงกับผู้ใหญ่','ไม่ยอมทำตามสิ่งที่ผู้ใหญ่สั่งหรือวางกฎเกณฑ์ไว้','จงใจก่อกวนผู้อื่น','มักตำหนิผู้อื่นในสิ่งที่ตนเองทำผิด','ขี้รำคาญ','โกรธบึ้งตึงเป็นประจำ','เจ้าคิดเจ้าแค้น'],cut:{T:8,P:12}}
+];
+const SNAP_OPTS=['ไม่เลย','เล็กน้อย','ค่อนข้างมาก','มาก'];
+
+/* ---------- คิดคะแนน ---------- */
+function scoreObs(ans){ // ans: array 40 of 1/0/null
+  const sc={},fl={};
+  OBS.forEach((s,i)=>{let n=0;for(let k=0;k<10;k++)n+=ans[i*10+k]===1?1:0;sc[s.key]=n;fl[s.key]=n>=OBS_CUT});
+  return {scores:sc,flags:fl};
+}
+function scoreSnap(ans,who){ // who 'T'|'P'
+  const sc={},fl={};let off=0;
+  SNAP.forEach(s=>{let n=0;for(let k=0;k<s.items.length;k++)n+=(+ans[off+k]||0);off+=s.items.length;sc[s.key]=n;fl[s.key]=n>=s.cut[who]});
+  return {scores:sc,flags:fl};
+}
+const SNAP_N=26;
+
+/* ---------- state ---------- */
+const S={role:'officer',tab:'summary',students:{},shots:{},actions:{},ready:false,canWrite:null,
+  sid:'',school:'',grade:'',draft:null,filter:{school:'',grade:'',status:''},onlyNeed:false,imp:null,open:null,dbErr:false};
+let db=null,dl=null;
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function toast(m){const t=$('#toast');t.textContent=m;t.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(()=>t.hidden=true,2400)}
+function store(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}}
+
+const ROLES={officer:'เจ้าหน้าที่',teacher:'ครูประจำชั้น',parent:'ผู้ปกครอง (อสม.)'};
+const TABS={
+ officer:[['summary','สรุปผลการดำเนินการ'],['students','นักเรียนและการติดตาม']],
+ teacher:[['obs','แบบสังเกต 4 โรค'],['snapT','SNAP-IV (ครู)'],['summary','สรุปผล']],
+ parent:[['obsP','แบบสังเกต 4 โรค'],['snapP','SNAP-IV (ไม่บังคับ)'],['summary','สรุปผล']]};
+const isObsTab=t=>t==='obs'||t==='obsP';
+
+/* ---------- ข้อมูลที่คำนวณต่อคน ---------- */
+function derive(sid){
+  const obsT=S.shots[sid+'_obs'],obsP=S.shots[sid+'_obsP'],obs=obsT||obsP,t=S.shots[sid+'_snapT'],p=S.shots[sid+'_snapP'];
+  const flag={},src={};COND_KEYS.forEach(c=>{flag[c]=false;src[c]=[]});
+  const add=(c,w)=>{flag[c]=true;if(!src[c].includes(w))src[c].push(w)};
+  [[obsT,'แบบสังเกต (ครู)'],[obsP,'แบบสังเกต (ผู้ปกครอง/อสม.)']].forEach(([o,w])=>{if(o)OBS.forEach(s=>{if(o.flags[s.key])add(s.key,w)})});
+  const obsAdhd=!!((obsT&&obsT.flags.adhd)||(obsP&&obsP.flags.adhd));
+  const needSnap=obsAdhd&&!t;
+  [[t,'SNAP-IV ครู'],[p,'SNAP-IV ผู้ปกครอง']].forEach(([d,w])=>{if(!d)return;
+    if(d.flags.inatt||d.flags.hyper)add('adhd',w);if(d.flags.odd)add('odd',w)});
+  const flagged=COND_KEYS.filter(c=>flag[c]);
+  const act=(S.actions[sid]&&S.actions[sid].conds)||{};
+  const stat=c=>(act[c]&&act[c].status)||'pending';
+  let stage;
+  if(!obsT&&!obsP&&!t&&!p)stage='none';
+  else if(!flagged.length)stage='normal';
+  else if(flagged.every(c=>stat(c)!=='pending'))stage='done';
+  else stage='pending';
+  return {obs,obsT,obsP,t,p,flag,src,flagged,act,stat,stage,obsAdhd,needSnap};
+}
+const STAGE={none:['ยังไม่คัดกรอง','p-mute'],normal:['คัดกรองแล้ว ไม่พบแนวโน้ม','p-ok'],pending:['พบแนวโน้ม รอดำเนินการ','p-bad'],done:['ดำเนินการแล้ว','p-info']};
+const ASTAT={pending:'รอดำเนินการ',screened:'คัดกรองขั้นต่อไปแล้ว',referred:'ส่งต่อแพทย์/สถานพยาบาลแล้ว',follow:'ติดตามต่อเนื่อง / ปิดเคส'};
+
+/* ---------- shell ---------- */
+function renderShell(){
+  const rb=$('#roles');rb.className='userbar';
+  rb.innerHTML=S.me?`<span class="note"><b>${esc(S.me.name)}</b> · ${ROLES[S.role]}</span><button class="btn sm" data-logout="1">ออกจากระบบ</button>`:'';
+  if(!S.me){$('#tabs').innerHTML='';return}
+  if(!TABS[S.role].some(t=>t[0]===S.tab))S.tab=TABS[S.role][0][0];
+  $('#tabs').innerHTML=TABS[S.role].map(([k,v])=>`<button role="tab" data-tab="${k}" aria-selected="${S.tab===k}">${v}</button>`).join('');
+}
+document.addEventListener('click',e=>{
+  const r=e.target.closest('[data-role]');
+  if(r){S.role=r.dataset.role;S.tab=TABS[S.role][0][0];S.sid='';S.draft=null;S.open=null;store('sk_role',S.role);render();return}
+  const t=e.target.closest('[data-tab]');
+  if(t){S.tab=t.dataset.tab;S.draft=null;S.open=null;render()}
+});
+
+function isForm(){return ['obs','obsP','snapT','snapP'].includes(S.tab)}
+function render(){
+  renderShell();
+  const a=$('#app');
+  if(S.gate){a.innerHTML=S.gate;bindGate();return}
+  if(!S.ready){a.innerHTML='<div class="empty">กำลังโหลดข้อมูล…</div>';return}
+  if(S.dbErr){a.innerHTML='<div class="card empty">เปิดฐานข้อมูลไม่ได้ในมุมมองนี้ กรุณาเปิดผ่านบัญชีที่ลงชื่อเข้าใช้แล้ว</div>';return}
+  if(S.tab==='summary')a.innerHTML=viewSummary();
+  else if(S.tab==='students')a.innerHTML=viewStudents();
+  else a.innerHTML=viewForm();
+  if(isForm())bindForm();
+  if(S.tab==='summary'||S.tab==='students')bindOfficer();
+}
+
+/* ---------- สรุปผล ---------- */
+function idOk(d){if(!/^\d{13}$/.test(d))return false;let t=0;for(let i=0;i<12;i++)t+=(+d[i])*(13-i);return (11-t%11)%10===+d[12]}
+function maskId(raw){const d=String(raw||'').replace(/\D/g,'');if(!idOk(d))return null;return d[0]+'-'+d.slice(1,5)+'-xxxxx-'+d.slice(10,12)+'-'+d[12]}
+const NOSCH='ไม่ระบุโรงเรียน',NOGRD='ไม่ระบุชั้น';
+const schOf=i=>S.students[i].school||NOSCH, grdOf=i=>S.students[i].grade||NOGRD;
+const natSort=(a,b)=>a.localeCompare(b,'th',{numeric:true});
+function agg(list,keyFn){
+  const m={};list.forEach(id=>{const d=derive(id);const k=keyFn(id);const o=m[k]||(m[k]={n:0,scr:0,found:0,pend:0,done:0});
+    o.n++;if(d.stage!=='none')o.scr++;if(d.flagged.length)o.found++;if(d.stage==='pending')o.pend++;if(d.stage==='done')o.done++});
+  return m;
+}
+function stats(){
+  const f=S.filter,all=Object.keys(S.students);
+  const schoolOpts=[...new Set(all.map(schOf))].sort(natSort);
+  if(f.school&&!schoolOpts.includes(f.school))f.school='';
+  const inSchool=all.filter(i=>!f.school||schOf(i)===f.school);
+  const gradeOpts=[...new Set(inSchool.map(grdOf))].sort(natSort);
+  if(f.grade&&!gradeOpts.includes(f.grade))f.grade='';
+  const ids=inSchool.filter(i=>!f.grade||grdOf(i)===f.grade);
+  const D=ids.map(i=>[i,derive(i)]);
+  const n=ids.length;
+  const obsN=D.filter(([,d])=>d.obsT||d.obsP).length;
+  const needSnap=D.filter(([,d])=>d.needSnap).length;
+  const snapN=D.filter(([,d])=>d.t||d.p).length;
+  const by={none:0,normal:0,pending:0,done:0};D.forEach(([,d])=>by[d.stage]++);
+  const cond={};COND_KEYS.forEach(c=>{const fl=D.filter(([,d])=>d.flag[c]);cond[c]={found:fl.length,done:fl.filter(([,d])=>d.stat(c)!=='pending').length,
+    referred:fl.filter(([,d])=>d.stat(c)==='referred').length}});
+  const schools=agg(all,schOf);
+  const classes=agg(inSchool,i=>schOf(i)+'\u0001'+grdOf(i));
+  return {D,n,obsN,needSnap,snapN,by,cond,schools,classes,schoolOpts,gradeOpts,total:all.length};
+}
+function pct(a,b){return b?Math.round(a*100/b):0}
+function viewSummary(){
+  const st=stats();
+  if(!st.total)return `<div class="card empty stack"><h2>ยังไม่มีรายชื่อนักเรียน</h2><div>${S.role==='officer'?'ไปที่แท็บ “นักเรียนและการติดตาม” เพื่อเพิ่มรายชื่อนักเรียน':S.role==='teacher'?'เพิ่มรายชื่อนักเรียนในแท็บ “แบบสังเกต 4 โรค” แล้วจึงบันทึกแบบสังเกต':'รอเจ้าหน้าที่หรือครูประจำชั้นเพิ่มรายชื่อนักเรียน'}</div></div>`;
+  const found=st.by.pending+st.by.done;
+  const f=S.filter;
+  let h=`<div class="stack">
+  <div class="card row" style="align-items:flex-end"><label class="f" style="flex-basis:220px">โรงเรียน<select id="fSchool"><option value="">ทุกโรงเรียน</option>${st.schoolOpts.map(g=>`<option ${f.school===g?'selected':''}>${esc(g)}</option>`).join('')}</select></label>
+   <label class="f" style="flex-basis:150px">ชั้นเรียน<select id="fGrade"><option value="">ทุกชั้น</option>${st.gradeOpts.map(g=>`<option ${f.grade===g?'selected':''}>${esc(g)}</option>`).join('')}</select></label>
+   <div class="note" style="flex:1 1 200px">กำลังแสดง ${st.n} จาก ${st.total} คน${f.school||f.grade?' ตามตัวกรอง':''}</div></div>
+  <div class="kpis">
+   <div class="kpi"><b>${st.n}</b><span>นักเรียนในระบบ</span></div>
+   <div class="kpi"><b>${st.obsN}</b><span>ทำแบบสังเกต 4 โรคแล้ว (${pct(st.obsN,st.n)}%)</span></div>
+   <div class="kpi"><b>${st.snapN}</b><span>ทำ SNAP-IV แล้ว (${pct(st.snapN,st.n)}%)</span></div>
+   <div class="kpi" style="${st.needSnap?'border-color:var(--warn)':''}"><b>${st.needSnap}</b><span>สงสัยสมาธิสั้น รอครูทำ SNAP-IV</span></div>
+   <div class="kpi"><b>${found}</b><span>พบแนวโน้มอย่างน้อย 1 ภาวะ</span></div>
+   <div class="kpi"><b>${st.by.done}</b><span>ดำเนินการครบแล้ว (${pct(st.by.done,found)}% ของที่พบ)</span></div>
+  </div>
+  <div class="card stack"><h2>สถานะนักเรียนทั้งหมด</h2>
+   <div class="bar" style="height:18px">${[['none','var(--line)'],['normal','var(--ok)'],['pending','var(--bad)'],['done','var(--info)']].map(([k,c])=>`<i style="width:${pct(st.by[k],st.n)}%;background:${c}"></i>`).join('')}</div>
+   <div class="flagrow">${Object.keys(STAGE).map(k=>`<span class="pill ${STAGE[k][1]}">${STAGE[k][0]} ${st.by[k]}</span>`).join('')}</div>
+  </div>
+  <div class="card stack"><h2>ความคืบหน้าแยกตามภาวะ</h2>
+   <div class="tblw"><table><thead><tr><th>ภาวะ</th><th>พบแนวโน้ม</th><th>ดำเนินการแล้ว</th><th>ส่งต่อ</th><th>ความคืบหน้า</th></tr></thead><tbody>
+   ${COND_KEYS.map(c=>{const o=st.cond[c];return `<tr><td>${COND[c]}</td><td>${o.found}</td><td>${o.done}</td><td>${o.referred}</td>
+    <td><div class="bar"><i style="width:${pct(o.done,o.found)}%;background:var(--accent)"></i></div></td></tr>`}).join('')}
+   </tbody></table></div>
+   <div class="note">นับเป็น “พบแนวโน้ม” เมื่อแบบสังเกตได้ 6 คะแนนขึ้นไปในหมวดนั้น หรือคะแนน SNAP-IV ถึงจุดตัด (สมาธิสั้นนับจากแบบสังเกตหมวด 3 หรือ SNAP-IV ด้านขาดสมาธิ/อยู่ไม่นิ่ง)</div>
+  </div>
+  <div class="card stack"><h2>แยกตามโรงเรียน</h2>
+   <div class="tblw"><table><thead><tr><th>โรงเรียน</th><th>นักเรียน</th><th>คัดกรองแล้ว</th><th>พบแนวโน้ม</th><th>รอดำเนินการ</th><th>ดำเนินการแล้ว</th></tr></thead><tbody>
+   ${Object.keys(st.schools).sort(natSort).map(k=>{const o=st.schools[k];return `<tr><td>${esc(k)}</td><td>${o.n}</td><td>${o.scr}</td><td>${o.found}</td><td>${o.pend}</td><td>${o.done}</td></tr>`}).join('')}
+   </tbody></table></div></div>
+  <div class="card stack"><h2>แยกตามชั้นเรียน${f.school?' · '+esc(f.school):''}</h2>
+   <div class="tblw"><table><thead><tr>${f.school?'':'<th>โรงเรียน</th>'}<th>ชั้น</th><th>นักเรียน</th><th>คัดกรองแล้ว</th><th>พบแนวโน้ม</th><th>รอดำเนินการ</th><th>ดำเนินการแล้ว</th></tr></thead><tbody>
+   ${Object.keys(st.classes).sort(natSort).map(k=>{const [sc,gr]=k.split('\u0001');const o=st.classes[k];return `<tr>${f.school?'':`<td>${esc(sc)}</td>`}<td>${esc(gr)}</td><td>${o.n}</td><td>${o.scr}</td><td>${o.found}</td><td>${o.pend}</td><td>${o.done}</td></tr>`}).join('')}
+   </tbody></table></div></div>`;
+  if(S.role==='officer'){
+    const rows=st.D.filter(([id,d])=>(!f.status||d.stage===f.status))
+      .sort((a,b)=>({pending:0,done:1,normal:2,none:3}[a[1].stage]-{pending:0,done:1,normal:2,none:3}[b[1].stage])||S.students[a[0]].name.localeCompare(S.students[b[0]].name,'th'));
+    h+=`<div class="card stack"><div class="row" style="justify-content:space-between;align-items:center"><h2>รายชื่อและสถานะรายคน</h2>
+    <div class="row"><label class="f" style="flex-basis:190px">สถานะ<select id="fStatus"><option value="">ทุกสถานะ</option>${Object.keys(STAGE).map(k=>`<option value="${k}" ${f.status===k?'selected':''}>${STAGE[k][0]}</option>`).join('')}</select></label>
+    <button class="btn" id="csv">ส่งออก CSV</button></div></div>
+    <div class="tblw"><table><thead><tr><th>ชื่อ</th><th>เลขบัตร (ปกปิด)</th><th>โรงเรียน</th><th>ชั้น</th><th>ภาวะที่พบแนวโน้ม</th><th>สถานะ</th><th></th></tr></thead><tbody>
+    ${rows.map(([id,d])=>`<tr><td>${esc(S.students[id].name)}</td><td class="nw">${esc(S.students[id].cid||'-')}</td><td>${esc(S.students[id].school||'')}</td><td>${esc(S.students[id].grade||'')}</td>
+     <td><div class="flagrow">${d.flagged.length?d.flagged.map(c=>`<span class="pill ${d.stat(c)==='pending'?'p-bad':'p-info'}">${COND[c]}</span>`).join(''):'<span class="muted">-</span>'}</div></td>
+     <td><div class="flagrow"><span class="pill ${STAGE[d.stage][1]}">${STAGE[d.stage][0]}</span>${d.needSnap?'<span class="pill p-warn">รอครูทำ SNAP-IV</span>':''}</div></td>
+     <td><button class="btn sm" data-open="${id}">ดูรายละเอียด</button></td></tr>`).join('')||'<tr><td colspan="7" class="muted">ไม่พบรายการตามตัวกรอง</td></tr>'}
+    </tbody></table></div></div>`;
+  }else h+=`<div class="note">หน้านี้แสดงเฉพาะตัวเลขรวม รายชื่อรายคนดูได้ที่บทบาทเจ้าหน้าที่</div>`;
+  return h+'</div>';
+}
+
+/* ---------- เจ้าหน้าที่: นักเรียน/ติดตาม ---------- */
+function studentForm(){const all=Object.keys(S.students);const dls=[...new Set(all.map(i=>S.students[i].school).filter(Boolean))],dg=[...new Set(all.map(i=>S.students[i].grade).filter(Boolean))];
+  return `<datalist id="dlSchool">${dls.map(x=>`<option value="${esc(x)}">`).join('')}</datalist><datalist id="dlGrade">${dg.map(x=>`<option value="${esc(x)}">`).join('')}</datalist><div class="card stack"><h2>เพิ่มนักเรียน</h2>
+  <div class="row"><label class="f" style="flex-basis:240px">ชื่อ-นามสกุล<input type="text" id="nName"></label>
+  <label class="f" style="flex-basis:210px">เลขบัตรประชาชน 13 หลัก<input type="text" id="nCid" inputmode="numeric" maxlength="17" autocomplete="off" placeholder="ระบบไม่เก็บ 5 หลักกลาง"></label>
+  <label class="f" style="flex-basis:90px;flex-grow:0">อายุ (ปี)<input type="number" id="nAge" min="3" max="19"></label>
+  <label class="f" style="flex-basis:130px">ชั้น<input type="text" id="nGrade" placeholder="เช่น ป.3/1" list="dlGrade"></label>
+  <label class="f" style="flex-basis:200px">โรงเรียน<input type="text" id="nSchool" list="dlSchool"></label>
+  <button class="btn pri" id="addStu" ${S.canWrite===false?'disabled':''}>เพิ่มรายชื่อ</button></div>
+  ${S.canWrite===false?'<div class="note">บัญชีนี้ดูข้อมูลได้อย่างเดียว ไม่มีสิทธิ์บันทึก</div>':''}</div>${importBox()}`}
+function importBox(){
+  const im=S.imp;
+  let h=`<div class="card stack" id="impBox"><h2>แนบไฟล์รายชื่อนักเรียน</h2>
+  <div class="note">รองรับไฟล์ .csv (UTF-8) และ .xlsx แถวแรกเป็นหัวตาราง ใช้คอลัมน์ ชื่อ-นามสกุล, เลขบัตรประชาชน (ไม่บังคับ ระบบไม่เก็บและไม่แสดง 5 หลักกลาง), อายุ, ชั้น, โรงเรียน (หรือแยกเป็น คำนำหน้า / ชื่อ / นามสกุล ก็ได้) ระบบจะแสดงตัวอย่างให้ตรวจก่อนนำเข้า และข้ามชื่อที่ซ้ำกับที่มีอยู่</div>
+  <div class="row"><label class="f" style="flex-basis:280px">เลือกไฟล์<input type="file" id="impFile" accept=".csv,.xlsx,.xls,text/csv"></label>
+  <button class="btn" id="impTpl">ดาวน์โหลดไฟล์แม่แบบ (.csv)</button></div>`;
+  if(im){
+    if(im.err)h+=`<div class="res bad"><b>${esc(im.err)}</b></div>`;
+    else{
+      const ok=im.rows.filter(r=>!r.dup),dup=im.rows.length-ok.length;
+      h+=`<div class="res ${ok.length?'ok':'warn'}"><b>ไฟล์ ${esc(im.file)}: พบ ${im.rows.length} แถว นำเข้าได้ ${ok.length} คน${dup?' · ซ้ำ/ว่าง ข้าม '+dup+' แถว':''}</b></div>
+      <div class="tblw" style="max-height:280px;overflow-y:auto"><table><thead><tr><th>ชื่อ-นามสกุล</th><th>เลขบัตร (ปกปิด)</th><th>อายุ</th><th>ชั้น</th><th>โรงเรียน</th><th></th></tr></thead><tbody>
+      ${im.rows.slice(0,200).map(r=>`<tr><td>${esc(r.name)}</td><td>${esc(r.cidMask||'-')}${r.cidBad?' <span class="pill p-warn">เลขไม่ถูกต้อง ไม่เก็บ</span>':''}</td><td>${esc(r.age)}</td><td>${esc(r.grade)}</td><td>${esc(r.school)}</td><td>${r.dup?'<span class="pill p-mute">'+esc(r.dup)+'</span>':'<span class="pill p-ok">นำเข้า</span>'}</td></tr>`).join('')}
+      </tbody></table></div>${im.rows.length>200?'<div class="note">แสดง 200 แถวแรก</div>':''}
+      <div class="row"><button class="btn pri" id="impGo" ${(!ok.length||S.canWrite===false)?'disabled':''}>นำเข้า ${ok.length} คน</button><button class="btn" id="impCancel">ยกเลิก</button></div>`;
+    }
+  }
+  return h+'</div>';
+}
+function parseCsv(t){
+  const rows=[];let row=[],f='',q=false;t=t.replace(/^\ufeff/,'');
+  for(let i=0;i<t.length;i++){const c=t[i];
+    if(q){if(c==='"'){if(t[i+1]==='"'){f+='"';i++}else q=false}else f+=c}
+    else if(c==='"')q=true;
+    else if(c===','){row.push(f);f=''}
+    else if(c==='\n'||c==='\r'){if(c==='\r'&&t[i+1]==='\n')i++;row.push(f);rows.push(row);row=[];f=''}
+    else f+=c}
+  if(f!==''||row.length){row.push(f);rows.push(row)}
+  return rows;
+}
+function rowsToStudents(grid){
+  grid=grid.map(r=>r.map(c=>String(c??'').trim())).filter(r=>r.some(c=>c));
+  if(!grid.length)return [];
+  let hi=grid.findIndex(r=>r.some(c=>/ชื่อ/.test(c)));
+  let col={},start=0;
+  if(hi>=0&&hi<5){
+    start=hi+1;const H=grid[hi];
+    const find=re=>H.findIndex(c=>re.test(c));
+    col.full=find(/ชื่อ.*สกุล/);col.pre=find(/คำนำหน้า|^คำนำ/);col.last=H.findIndex(c=>/สกุล/.test(c)&&!/ชื่อ.*สกุล/.test(c));
+    col.first=H.findIndex((c,i)=>/^ชื่อ/.test(c)&&i!==col.full);
+    col.cid=find(/บัตร|ประชาชน|ปชช/);col.age=find(/อายุ/);col.grade=find(/ชั้น/);col.school=find(/โรงเรียน|สถานศึกษา/);
+  }else{col={full:0,pre:-1,last:-1,first:-1,cid:-1,age:1,grade:2,school:3}}
+  const g=(r,i)=>i>=0?(r[i]||''):'';
+  return grid.slice(start).map(r=>{
+    let name=col.full>=0?g(r,col.full):[g(r,col.pre),g(r,col.first),g(r,col.last)].filter(Boolean).join(' ');
+    if(col.full>=0&&col.pre>=0&&g(r,col.pre))name=g(r,col.pre)+name;
+    return {name:name.trim(),cid:g(r,col.cid),age:g(r,col.age).replace(/[^0-9]/g,''),grade:g(r,col.grade),school:g(r,col.school)};
+  });
+}
+async function readRosterFile(file){
+  const ext=(file.name.split('.').pop()||'').toLowerCase();
+  let grid;
+  if(ext==='csv'||file.type==='text/csv'){grid=parseCsv(await file.text())}
+  else{
+    if(typeof XLSX==='undefined')throw new Error('โหลดตัวอ่าน Excel ไม่สำเร็จ ลองบันทึกไฟล์เป็น .csv แล้วแนบใหม่');
+    const wb=XLSX.read(await file.arrayBuffer(),{type:'array'});
+    grid=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});
+  }
+  return rowsToStudents(grid);
+}
+function bindImport(){
+  const f=$('#impFile');
+  if(f)f.onchange=async()=>{
+    const file=f.files[0];if(!file)return;
+    try{
+      const rows=await readRosterFile(file);
+      const seen=new Set(Object.values(S.students).map(x=>[x.name,x.school||'',x.grade||'',x.cid||''].join('|')));
+      rows.forEach(r=>{
+        const d=String(r.cid||'').replace(/\D/g,'');delete r.cid;r.cidMask='';
+        if(d){const m=maskId(d);if(m)r.cidMask=m;else r.cidBad=true}
+        if(!r.name){r.dup='ไม่มีชื่อ';return}
+        const k=[r.name,r.school,r.grade,r.cidMask].join('|');
+        if(seen.has(k))r.dup='ซ้ำ';else seen.add(k);
+      });
+      S.imp=rows.length?{file:file.name,rows}:{file:file.name,rows:[],err:'ไม่พบรายชื่อในไฟล์นี้ ตรวจว่าแถวแรกเป็นหัวตารางและมีคอลัมน์ชื่อ'};
+    }catch(e){S.imp={file:file.name,rows:[],err:e.message||'อ่านไฟล์ไม่ได้'}}
+    render();const b=$('#impBox');b&&b.scrollIntoView({block:'nearest'});
+  };
+  const t=$('#impTpl');if(t)t.onclick=async()=>{
+    if(!dl){toast('เบราว์เซอร์นี้ส่งออกไฟล์ไม่ได้');return}
+    try{await dl.save({filename:'แม่แบบรายชื่อนักเรียน.csv',data:'\ufeff'+'ชื่อ-นามสกุล,เลขบัตรประชาชน,อายุ,ชั้น,โรงเรียน\r\n'});toast('บันทึกไฟล์แม่แบบแล้ว')}catch(e){if(e.code!=='declined')toast('ส่งออกไม่ได้')}
+  };
+  const c=$('#impCancel');if(c)c.onclick=()=>{S.imp=null;render()};
+  const go=$('#impGo');if(go)go.onclick=importRows;
+}
+async function importRows(){
+  const rows=S.imp.rows.filter(r=>!r.dup);const go=$('#impGo');if(go)go.disabled=true;
+  let n=0;
+  try{
+    for(let i=0;i<rows.length;i+=20){
+      await Promise.all(rows.slice(i,i+20).map(r=>db.collection('students').add({name:r.name,cid:r.cidMask||'',age:r.age,grade:r.grade,school:r.school,createdAt:Date.now()})));
+      n=Math.min(i+20,rows.length);
+    }
+    S.imp=null;toast('นำเข้ารายชื่อแล้ว '+rows.length+' คน');render();
+  }catch(e){toast('นำเข้าได้ '+n+' จาก '+rows.length+' คน หยุดเพราะ: '+(e.code||'ไม่ทราบสาเหตุ'));if(go)go.disabled=false}
+}
+function viewStudents(){
+  const ids=Object.keys(S.students).sort((a,b)=>S.students[a].name.localeCompare(S.students[b].name,'th'));
+  let h='<div class="stack">'+studentForm();
+  if(S.open&&S.students[S.open])h+=detail(S.open);
+  h+=`<div class="card stack"><h2>รายชื่อนักเรียน (${ids.length})</h2>`;
+  if(!ids.length)h+='<div class="empty">ยังไม่มีรายชื่อ เพิ่มนักเรียนคนแรกด้านบนได้เลย</div>';
+  else h+=`<div class="tblw"><table><thead><tr><th>ชื่อ</th><th>เลขบัตร (ปกปิด)</th><th>อายุ</th><th>ชั้น</th><th>โรงเรียน</th><th>สถานะ</th><th></th></tr></thead><tbody>${ids.map(id=>{const s=S.students[id],d=derive(id);
+    return `<tr><td>${esc(s.name)}</td><td class="nw">${esc(s.cid||'-')}</td><td>${esc(s.age||'')}</td><td>${esc(s.grade||'')}</td><td>${esc(s.school||'')}</td><td><span class="pill ${STAGE[d.stage][1]}">${STAGE[d.stage][0]}</span></td>
+    <td><div class="flagrow"><button class="btn sm" data-open="${id}">รายละเอียด</button><button class="btn sm" data-del="${id}" ${S.canWrite===false?'disabled':''}>ลบ</button></div></td></tr>`}).join('')}</tbody></table></div>`;
+  return h+'</div></div>';
+}
+function scoreLine(d){
+  const parts=[];
+  [[d.obsT,'แบบสังเกต 4 โรค (ครู)'],[d.obsP,'แบบสังเกต 4 โรค (ผู้ปกครอง/อสม.)']].forEach(([o,l])=>{if(o)parts.push('<b>'+l+'</b> ('+esc(o.respondent||'')+' '+esc(o.date||'')+'): '+OBS.map(s=>`${COND[s.key]} ${o.scores[s.key]}/10`).join(' · '))});
+  if(d.needSnap)parts.push('<span class="pill p-warn">สงสัยสมาธิสั้น: ครูยังไม่ได้ทำ SNAP-IV</span>');
+  if(d.t)parts.push('<b>SNAP-IV ครู</b> ('+esc(d.t.respondent||'')+'): '+SNAP.map(s=>`${s.title.split('/')[0]} ${d.t.scores[s.key]}`).join(' · '));
+  if(d.p)parts.push('<b>SNAP-IV ผู้ปกครอง/อสม.</b> ('+esc(d.p.respondent||'')+'): '+SNAP.map(s=>`${s.title.split('/')[0]} ${d.p.scores[s.key]}`).join(' · '));
+  return parts.length?parts.map(p=>`<div>${p}</div>`).join(''):'<div class="muted">ยังไม่มีผลการคัดกรอง</div>';
+}
+function detail(id){
+  const s=S.students[id],d=derive(id);
+  return `<div class="card stack" id="detail"><div class="row" style="justify-content:space-between;align-items:center"><h2>${esc(s.name)} <span class="muted" style="font-size:15px;font-weight:400">${esc(s.grade||'')} ${s.age?'· อายุ '+esc(s.age)+' ปี':''} ${s.cid?'· เลขบัตร '+esc(s.cid):''}</span></h2><button class="btn sm" data-close="1">ปิด</button></div>
+  <div class="stack" style="gap:6px">${scoreLine(d)}</div>
+  ${d.flagged.length?`<h3>การดำเนินการต่อภาวะที่พบแนวโน้ม</h3>
+  <div class="stack">${d.flagged.map(c=>{const a=d.act[c]||{};
+   const nx=c==='odd'?'คะแนน SNAP-IV ด้านดื้อต่อต้านถึงจุดตัด':OBS_NEXT[c];
+   return `<div class="sec"><h3><span>${COND[c]}</span><span class="note">พบจาก: ${esc(d.src[c].join(', '))}</span></h3>
+   <div style="padding:12px 14px" class="stack"><div class="note">${esc(c==='adhd'&&!d.obsAdhd?'สมาธิสั้นจาก SNAP-IV: คะแนนถึงจุดตัด':nx)}</div>
+   <div class="row"><label class="f" style="flex-basis:220px">สถานะ<select data-act="${c}" data-f="status">${Object.entries(ASTAT).map(([k,v])=>`<option value="${k}" ${(a.status||'pending')===k?'selected':''}>${v}</option>`).join('')}</select></label>
+   <label class="f" style="flex-basis:150px">วันที่<input type="date" data-act="${c}" data-f="date" value="${esc(a.date||'')}"></label></div>
+   <label class="f">บันทึกการดำเนินการ<textarea data-act="${c}" data-f="note">${esc(a.note||'')}</textarea></label></div></div>`}).join('')}
+  <div><button class="btn pri" id="saveAct" data-sid="${id}" ${S.canWrite===false?'disabled':''}>บันทึกการดำเนินการ</button></div></div>`:'<div class="muted">ไม่พบภาวะที่ถึงเกณฑ์ ยังไม่ต้องดำเนินการต่อ</div>'}</div>`;
+}
+function bindOfficer(){
+  const fs=$('#fSchool');if(fs){fs.onchange=()=>{S.filter.school=fs.value;S.filter.grade='';render()};$('#fGrade').onchange=e=>{S.filter.grade=e.target.value;render()}}
+  const fz=$('#fStatus');if(fz){fz.onchange=e=>{S.filter.status=e.target.value;render()};$('#csv').onclick=exportCsv}
+  const b=$('#addStu');if(b)b.onclick=addStudent;
+  bindImport();
+  document.querySelectorAll('[data-open]').forEach(x=>x.onclick=()=>{S.open=x.dataset.open;if(S.tab==='summary'){S.tab='students'}render();const d=$('#detail');d&&d.scrollIntoView({block:'start'})});
+  document.querySelectorAll('[data-close]').forEach(x=>x.onclick=()=>{S.open=null;render()});
+  document.querySelectorAll('[data-del]').forEach(x=>x.onclick=()=>delStudent(x.dataset.del,x));
+  const sa=$('#saveAct');if(sa)sa.onclick=()=>saveAct(sa.dataset.sid);
+}
+async function addStudent(){
+  const name=$('#nName').value.trim();if(!name){toast('กรุณากรอกชื่อ-นามสกุล');return}
+  const rawCid=(($('#nCid')||{}).value||'').replace(/\D/g,'');let cid='';
+  if(rawCid){cid=maskId(rawCid);if(!cid){toast('เลขบัตรประชาชนไม่ถูกต้อง ต้องมี 13 หลักและผ่านการตรวจสอบ');$('#nCid').focus();return}}
+  try{await db.collection('students').add({name,cid,age:$('#nAge').value||'',grade:$('#nGrade').value.trim(),school:$('#nSchool').value.trim(),createdAt:Date.now()});toast('เพิ่มรายชื่อแล้ว');['#nName','#nCid','#nAge','#nGrade','#nSchool'].forEach(i=>{const e=$(i);if(e)e.value=''})}
+  catch(e){toast('บันทึกไม่ได้: '+(e.code||'ไม่ทราบสาเหตุ'))}
+}
+let delArm=null;
+async function delStudent(id,btn){
+  if(delArm!==id){delArm=id;btn.textContent='กดอีกครั้งเพื่อยืนยัน';setTimeout(()=>{if(delArm===id){delArm=null;render()}},3000);return}
+  delArm=null;
+  try{await Promise.all([db.doc('students/'+id).delete(),db.doc('screenings/'+id+'_obs').delete(),db.doc('screenings/'+id+'_obsP').delete(),db.doc('screenings/'+id+'_snapT').delete(),db.doc('screenings/'+id+'_snapP').delete(),db.doc('actions/'+id).delete()]);toast('ลบแล้ว')}
+  catch(e){toast('ลบไม่ได้: '+(e.code||''))}
+}
+async function saveAct(id){
+  const conds={...((S.actions[id]&&S.actions[id].conds)||{})};
+  document.querySelectorAll('[data-act]').forEach(el=>{const c=el.dataset.act;conds[c]={...(conds[c]||{}),[el.dataset.f]:el.value}});
+  try{await db.doc('actions/'+id).set({conds,updatedAt:Date.now()});toast('บันทึกการดำเนินการแล้ว')}
+  catch(e){toast('บันทึกไม่ได้: '+(e.code||''))}
+}
+async function exportCsv(){
+  const st=stats();
+  const head=['ชื่อ','เลขบัตร (ปกปิด)','อายุ','ชั้น','โรงเรียน','สถานะ','ภาวะที่พบแนวโน้ม','สังเกต(ครู) เรียนรู้ช้า','สังเกต(ครู) LD','สังเกต(ครู) สมาธิสั้น','สังเกต(ครู) ออทิสติก','สังเกต(ผู้ปกครอง) เรียนรู้ช้า','สังเกต(ผู้ปกครอง) LD','สังเกต(ผู้ปกครอง) สมาธิสั้น','สังเกต(ผู้ปกครอง) ออทิสติก','รอครูทำ SNAP-IV','SNAP ครู ขาดสมาธิ','SNAP ครู อยู่ไม่นิ่ง','SNAP ครู ดื้อ','SNAP ผู้ปกครอง ขาดสมาธิ','SNAP ผู้ปกครอง อยู่ไม่นิ่ง','SNAP ผู้ปกครอง ดื้อ','การดำเนินการ'];
+  const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
+  const lines=[head.map(q).join(',')];
+  st.D.forEach(([id,d])=>{const s=S.students[id];
+    lines.push([s.name,s.cid||'',s.age,s.grade,s.school,STAGE[d.stage][0],d.flagged.map(c=>COND[c]).join(' / '),
+     ...OBS.map(o=>d.obsT?d.obsT.scores[o.key]:''),...OBS.map(o=>d.obsP?d.obsP.scores[o.key]:''),d.needSnap?'ใช่':'',...SNAP.map(o=>d.t?d.t.scores[o.key]:''),...SNAP.map(o=>d.p?d.p.scores[o.key]:''),
+     d.flagged.map(c=>COND[c]+': '+ASTAT[d.stat(c)]).join(' / ')].map(q).join(','))});
+  if(!dl){toast('เบราว์เซอร์นี้ส่งออกไฟล์ไม่ได้');return}
+  try{await dl.save({filename:'สรุปผลการคัดกรอง'+(S.filter.school?'_'+S.filter.school:'')+(S.filter.grade?'_'+S.filter.grade:'')+'.csv',data:'﻿'+lines.join('\r\n')});toast('ส่งออกแล้ว')}
+  catch(e){if(e.code!=='declined')toast('ส่งออกไม่ได้')}
+}
+
+/* ---------- แบบฟอร์มคัดกรอง ---------- */
+function formDocId(){return S.sid?S.sid+'_'+S.tab:''}
+function loadDraft(){
+  const ex=S.shots[formDocId()];
+  const n=isObsTab(S.tab)?40:SNAP_N;
+  S.draft=ex?{answers:[...ex.answers],respondent:ex.respondent||'',date:ex.date||'',rel:ex.rel||'',avg:ex.avg||'',term:ex.term||''}
+    :{answers:Array(n).fill(null),respondent:(S.me&&S.me.name)||'',date:new Date().toISOString().slice(0,10),rel:(S.tab==='snapP'||S.tab==='obsP')?'ผู้ปกครอง':'',avg:'',term:''};
+}
+function viewForm(){
+  const ids=Object.keys(S.students).sort((a,b)=>S.students[a].name.localeCompare(S.students[b].name,'th'));
+  const schools=[...new Set(ids.map(i=>S.students[i].school||'').filter(Boolean))].sort(natSort);
+  const grades=[...new Set(ids.filter(i=>!S.school||S.students[i].school===S.school).map(i=>S.students[i].grade||'').filter(Boolean))].sort(natSort);
+  const list=ids.filter(i=>(!S.school||S.students[i].school===S.school)&&(!S.grade||S.students[i].grade===S.grade)&&(!(S.tab==='snapT'&&S.onlyNeed)||derive(i).needSnap));
+  const title={obs:'แบบสังเกตพฤติกรรม 4 โรค (ครูประจำชั้น)',obsP:'แบบสังเกตพฤติกรรม 4 โรค (ผู้ปกครอง/อสม.)',snapT:'แบบประเมินพฤติกรรม SNAP-IV (Short Form) สำหรับครูประจำชั้น',snapP:'แบบประเมินพฤติกรรม SNAP-IV (Short Form) สำหรับผู้ปกครอง'}[S.tab];
+  let h=`<div class="stack"><div class="card stack"><h2>${title}</h2>
+  <div class="note">${S.tab==='obs'?'ตอบโดยครูประจำชั้นที่อยู่ใกล้ชิดเด็กไม่น้อยกว่า 2 เดือน ตอบให้ครบ 40 ข้อ เพราะเด็ก 1 คนอาจมีหลายภาวะร่วมกัน':S.tab==='obsP'?'ตอบโดยผู้ปกครองหรือ อสม. ที่ใกล้ชิดเด็ก ใช้แบบเดียวกับครู ตอบให้ครบ 40 ข้อ เพราะเด็ก 1 คนอาจมีหลายภาวะร่วมกัน':S.tab==='snapT'?'ทำเมื่อแบบสังเกตพบแนวโน้มสมาธิสั้น (หมวด 3 ตั้งแต่ 6 คะแนน) ทำเครื่องหมายว่าอาการแต่ละข้อตรงกับลักษณะของเด็กเพียงใด ครบ 26 ข้อ':'ทำเครื่องหมายว่าอาการแต่ละข้อตรงกับลักษณะของเด็กเพียงใด ครบ 26 ข้อ (ไม่บังคับ)'}</div>
+  <div class="row"><label class="f" style="flex-basis:200px;flex-grow:0">โรงเรียน<select id="scSel"><option value="">ทุกโรงเรียน</option>${schools.map(g=>`<option ${S.school===g?'selected':''}>${esc(g)}</option>`).join('')}</select></label>
+  <label class="f" style="flex-basis:130px;flex-grow:0">ชั้น<select id="gSel"><option value="">ทุกชั้น</option>${grades.map(g=>`<option ${S.grade===g?'selected':''}>${esc(g)}</option>`).join('')}</select></label>
+  <label class="f" style="flex-basis:260px">นักเรียน<select id="sSel"><option value="">— เลือกนักเรียน —</option>${list.map(i=>`<option value="${i}" ${S.sid===i?'selected':''}>${esc(S.students[i].name)}${S.students[i].grade?' ('+esc(S.students[i].grade)+')':''}${!S.school&&S.students[i].school?' – '+esc(S.students[i].school):''}${S.shots[i+'_'+S.tab]?' ✓':''}${S.tab==='snapT'&&derive(i).needSnap?' ⚑ ต้องทำ':''}</option>`).join('')}</select></label></div>
+  ${S.tab==='snapT'?`<label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="onlyNeed" ${S.onlyNeed?'checked':''}> แสดงเฉพาะนักเรียนที่ต้องทำ SNAP-IV (${ids.filter(i=>derive(i).needSnap).length} คน)</label>`:''}
+  ${S.role!=='parent'?'<details id="addBox"><summary class="btn sm" style="display:inline-block">+ เพิ่มนักเรียนใหม่</summary><div style="margin-top:12px">'+studentForm().replace('class="card stack"','class="stack"').replace('<h2>เพิ่มนักเรียน</h2>','')+'</div></details>':''}
+  </div>`;
+  if(!S.sid){return h+`<div class="card empty">${ids.length?'เลือกนักเรียนเพื่อเริ่มกรอกแบบประเมิน':'ยังไม่มีรายชื่อนักเรียน '+(S.role==='parent'?'กรุณาแจ้งเจ้าหน้าที่หรือครูประจำชั้น':'เพิ่มรายชื่อนักเรียนด้านบนก่อน')}</div></div>`}
+  if(!S.draft)loadDraft();
+  const D=S.draft,stu=S.students[S.sid];
+  if(S.tab==='snapT'){const dv=derive(S.sid);h+=dv.needSnap?'<div class="res bad"><b>สงสัยสมาธิสั้น ครูต้องทำ SNAP-IV</b><div>ผลแบบสังเกต 4 โรค หมวดสมาธิสั้นถึง 6 คะแนน ('+esc(dv.src.adhd.filter(x=>x.startsWith("แบบสังเกต")).join(", "))+')</div></div>':dv.obsT||dv.obsP?'<div class="res ok"><b>แบบสังเกตยังไม่พบแนวโน้มสมาธิสั้น</b><div>ยังไม่จำเป็นต้องทำ SNAP-IV แต่ทำเพิ่มได้ถ้าครูสงสัย</div></div>':'<div class="res warn"><b>ยังไม่มีแบบสังเกต 4 โรคของเด็กคนนี้</b><div>ควรทำแบบสังเกตก่อน แล้วจึงทำ SNAP-IV ถ้าพบแนวโน้มสมาธิสั้น</div></div>'}
+  h+=`<div class="card stack"><div class="row"><div style="flex:1 1 220px"><div class="muted" style="font-size:14px">ข้อมูลเด็ก</div><b>${esc(stu.name)}</b> <span class="muted">${esc(stu.grade||'')} ${stu.age?'· อายุ '+esc(stu.age)+' ปี':''} ${stu.cid?'· เลขบัตร '+esc(stu.cid):''}</span></div>
+  <label class="f"><span>${(S.tab==='snapP'||S.tab==='obsP')?'ชื่อผู้ตอบ':'ชื่อครูผู้ตอบ'}</span><input type="text" id="resp" value="${esc(D.respondent)}"></label>
+  ${(S.tab==='snapP'||S.tab==='obsP')?`<label class="f" style="flex-basis:150px;flex-grow:0">เป็น<select id="rel"><option ${D.rel==='ผู้ปกครอง'?'selected':''}>ผู้ปกครอง</option><option ${D.rel==='อสม.'?'selected':''}>อสม.</option></select></label>`:''}
+  <label class="f" style="flex-basis:160px;flex-grow:0">วันที่ประเมิน<input type="date" id="dt" value="${esc(D.date)}"></label>
+  ${S.tab==='snapT'?`<label class="f" style="flex-basis:110px;flex-grow:0">เกรดเฉลี่ย<input type="text" id="avg" value="${esc(D.avg)}"></label>`:''}</div></div>`;
+  if(isObsTab(S.tab)){
+    OBS.forEach((s,si)=>{h+=`<div class="sec"><h3><span>${s.title}</span><span class="pill p-mute" id="sc_${s.key}"></span></h3>`;
+      s.items.forEach((t,k)=>{const n=si*10+k;h+=`<div class="q"><div class="t"><em>${s.from+k}.</em>${esc(t)}</div><div class="opts">
+       <label><input type="radio" name="q${n}" value="1" ${D.answers[n]===1?'checked':''}><span>ใช่</span></label>
+       <label><input type="radio" name="q${n}" value="0" ${D.answers[n]===0?'checked':''}><span>ไม่ใช่</span></label></div></div>`});h+='</div>'});
+  }else{
+    let off=0;const who=S.tab==='snapT'?'T':'P';
+    SNAP.forEach(s=>{h+=`<div class="sec"><h3><span>${s.title}</span><span class="pill p-mute" id="sc_${s.key}"></span></h3>`;
+      s.items.forEach((t,k)=>{const n=off+k;h+=`<div class="q"><div class="t"><em>${n+1}.</em>${esc(t)}</div><div class="opts">${SNAP_OPTS.map((o,v)=>`<label><input type="radio" name="q${n}" value="${v}" ${D.answers[n]===v?'checked':''}><span>${o}</span></label>`).join('')}</div></div>`});
+      off+=s.items.length;h+='</div>'});
+  }
+  h+=`<div class="card stack"><div id="result"></div><div class="row"><button class="btn pri" id="saveForm" ${S.canWrite===false?'disabled':''}>บันทึกผลการคัดกรอง</button>
+  ${S.shots[formDocId()]?'<span class="note">เคยบันทึกแล้ว การบันทึกใหม่จะแทนที่ผลเดิม</span>':''}${S.canWrite===false?'<span class="note">บัญชีนี้ไม่มีสิทธิ์บันทึก</span>':''}</div></div></div>`;
+  return h;
+}
+function liveResult(){
+  const D=S.draft,box=$('#result');if(!box)return;
+  const total=isObsTab(S.tab)?40:SNAP_N;const done=D.answers.filter(v=>v!==null).length;
+  let r,html='';
+  if(isObsTab(S.tab)){
+    r=scoreObs(D.answers);
+    OBS.forEach(s=>{const el=$('#sc_'+s.key);if(el){el.textContent=r.scores[s.key]+'/10 คะแนน';el.className='pill '+(r.flags[s.key]?'p-bad':'p-mute')}});
+    const fl=OBS.filter(s=>r.flags[s.key]);
+    html=fl.length?`<div class="res bad"><b>พบแนวโน้ม ${fl.length} ภาวะ (ตอบ “ใช่” ตั้งแต่ 6 ข้อขึ้นไป)</b>${fl.map(s=>`<div>• ${COND[s.key]}: ${OBS_NEXT[s.key]}</div>`).join('')}</div>`
+      :`<div class="res ok"><b>ยังไม่พบหมวดที่ถึงเกณฑ์ (ต่ำกว่า 6 คะแนนทุกหมวด)</b></div>`;
+  }else{
+    const who=S.tab==='snapT'?'T':'P';r=scoreSnap(D.answers,who);
+    SNAP.forEach(s=>{const el=$('#sc_'+s.key);if(el){el.textContent=r.scores[s.key]+' คะแนน (จุดตัด ≥'+s.cut[who]+')';el.className='pill '+(r.flags[s.key]?'p-bad':'p-mute')}});
+    const fl=SNAP.filter(s=>r.flags[s.key]);
+    html=fl.length?`<div class="res bad"><b>คะแนนถึงจุดตัด ${fl.length} ด้าน</b>${fl.map(s=>`<div>• ${s.title}: ${r.scores[s.key]} คะแนน (จุดตัด ≥${s.cut[who]})</div>`).join('')}</div>`
+      :`<div class="res ok"><b>ทุกด้านต่ำกว่าจุดตัด</b></div>`;
+  }
+  box.innerHTML=`<div class="note">ตอบแล้ว ${done}/${total} ข้อ${done<total?' (ข้อที่ไม่ตอบนับเป็น 0 คะแนน)':''}</div>`+html;
+}
+function bindForm(){
+  const on=$('#onlyNeed');if(on)on.onchange=()=>{S.onlyNeed=on.checked;S.sid='';S.draft=null;render()};
+  const sc=$('#scSel');if(sc)sc.onchange=()=>{S.school=sc.value;S.grade='';S.sid='';S.draft=null;render()};
+  const g=$('#gSel');if(g)g.onchange=()=>{S.grade=g.value;S.sid='';S.draft=null;render()};
+  const s=$('#sSel');if(s)s.onchange=()=>{S.sid=s.value;S.draft=null;render()};
+  const b=$('#addStu');if(b)b.onclick=addStudent;
+  bindImport();
+  if(!S.sid)return;
+  const D=S.draft;
+  document.querySelectorAll('input[type=radio]').forEach(r=>r.onchange=()=>{D.answers[+r.name.slice(1)]=+r.value;liveResult()});
+  const bind=(id,k)=>{const e=$(id);if(e)e.oninput=e.onchange=()=>D[k]=e.value};
+  bind('#resp','respondent');bind('#dt','date');bind('#rel','rel');bind('#avg','avg');
+  $('#saveForm').onclick=saveForm;liveResult();
+}
+async function saveForm(){
+  const D=S.draft;if(!D.respondent.trim()){toast('กรุณากรอกชื่อผู้ตอบ');$('#resp').focus();return}
+  const who=S.tab==='snapT'?'T':'P';
+  const r=isObsTab(S.tab)?scoreObs(D.answers):scoreSnap(D.answers,who);
+  const doc={studentId:S.sid,type:S.tab,answers:D.answers,respondent:D.respondent.trim(),rel:D.rel||'',date:D.date,avg:D.avg||'',scores:r.scores,flags:r.flags,updatedAt:Date.now()};
+  try{await db.doc('screenings/'+formDocId()).set(doc);toast('บันทึกผลการคัดกรองแล้ว')}
+  catch(e){toast('บันทึกไม่ได้: '+(e.code||'ไม่ทราบสาเหตุ'))}
+}
+
+/* ---------- เริ่มต้น ---------- */
+function snapToMap(snap){const o={};snap.docs.forEach(d=>{o[d.id]=d.data()});return o}
+function refresh(){
+  // อย่ารีเรนเดอร์ทับแบบฟอร์มที่กำลังกรอก
+  if(isForm()&&S.sid&&S.draft){return}
+  const ae=document.activeElement;
+  if(ae&&ae.closest&&ae.closest('#app')&&/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)&&S.ready){return}
+  render();
+}
+/* ---------- ส่วนเชื่อม Supabase (ล็อกอินอีเมล + ฐานข้อมูล) ---------- */
+window.STANDALONE=true;
+const CFG=window.APP_CONFIG||{};
+const ROLE_UI={officer:'officer',teacher:'teacher',asm:'parent'};
+let sb=null,curUid=undefined,subsOff=[];
+
+function dbError(e){const x=new Error(e.message||'error');x.code=(e.code==='42501'||/row-level security/i.test(e.message||''))?'ไม่มีสิทธิ์ทำรายการนี้':(e.message||e.code||'ไม่ทราบสาเหตุ');return x}
+function makeDb(sb){
+  const T={
+    students:{cols:'id,name,cid,age,grade,school,created_at',key:'id',filter:q=>q.is('deleted_at',null),doc:r=>({name:r.name,cid:r.cid||'',age:r.age||'',grade:r.grade||'',school:r.school||''})},
+    screenings:{cols:'id,student_id,type,answers,respondent,rel,date,avg,scores,flags,updated_at',key:'id',doc:r=>({studentId:r.student_id,type:r.type,answers:r.answers,respondent:r.respondent||'',rel:r.rel||'',date:r.date||'',avg:r.avg||'',scores:r.scores,flags:r.flags})},
+    actions:{cols:'student_id,conds,updated_at',key:'student_id',doc:r=>({conds:r.conds||{}})}};
+  async function fetchAll(t){
+    const c=T[t],out=[];
+    for(let from=0;;from+=1000){
+      let q=sb.from(t).select(c.cols).order(c.key).range(from,from+999);if(c.filter)q=c.filter(q);
+      const {data,error}=await q;if(error)throw dbError(error);
+      out.push(...data);if(data.length<1000)break}
+    return out}
+  function watch(t,cb,errcb){
+    let alive=true,busy=false,again=false,timer=null;
+    const load=async()=>{
+      if(!alive)return;if(busy){again=true;return}busy=true;
+      try{const rows=await fetchAll(t);if(alive)cb({docs:rows.map(r=>({id:r[T[t].key],data:()=>T[t].doc(r)}))})}
+      catch(e){if(alive&&errcb)errcb(e)}
+      busy=false;if(again){again=false;load()}};
+    const ch=sb.channel('rt-'+t+'-'+Math.random().toString(36).slice(2))
+      .on('postgres_changes',{event:'*',schema:'public',table:t},()=>{clearTimeout(timer);timer=setTimeout(load,300)}).subscribe();
+    const poll=setInterval(load,30000);load();
+    return ()=>{alive=false;clearInterval(poll);clearTimeout(timer);try{sb.removeChannel(ch)}catch(e){}}}
+  return {
+    collection(t){return {
+      add:async o=>{
+        if(t!=='students')throw dbError({message:'unsupported'});
+        const id=crypto.randomUUID();
+        const {error}=await sb.from('students').insert({id,name:o.name,cid:o.cid||'',age:String(o.age||''),grade:o.grade||'',school:o.school||''});
+        if(error)throw dbError(error);return {id}},
+      onSnapshot:(cb,e)=>watch(t,cb,e)}},
+    doc(path){const [t,id]=path.split('/');return {
+      set:async o=>{
+        let row,conflict;
+        if(t==='screenings'){row={id,student_id:o.studentId,type:o.type,answers:o.answers,respondent:o.respondent||'',rel:o.rel||'',date:o.date||null,avg:o.avg||'',scores:o.scores,flags:o.flags};conflict='id'}
+        else if(t==='actions'){row={student_id:id,conds:o.conds||{}};conflict='student_id'}
+        else throw dbError({message:'unsupported'});
+        const {error}=await sb.from(t).upsert(row,{onConflict:conflict});if(error)throw dbError(error)},
+      delete:async()=>{
+        if(t==='students'){const {error}=await sb.from('students').update({deleted_at:new Date().toISOString()}).eq('id',id);if(error)throw dbError(error)}
+        /* ผลคัดกรอง/การดำเนินการ: เก็บไว้ (ลบนักเรียนแบบกู้คืนได้) */}}}}}
+
+dl={save:async({filename,data})=>{
+  const blob=new Blob([data],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download=filename;document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},800);return {status:'saved'}}};
+
+function gateCard(inner){return `<div class="card stack" style="max-width:520px;margin:24px auto">${inner}</div>`}
+function loginGate(){return gateCard(`<h2>เข้าสู่ระบบ</h2>
+  <div class="note">กรอกอีเมลที่เจ้าหน้าที่ลงทะเบียนไว้ ระบบจะส่งลิงก์เข้าสู่ระบบไปให้ทางอีเมล (ไม่ต้องใช้รหัสผ่าน) เปิดลิงก์บนเครื่องนี้เพื่อเข้าใช้งาน</div>
+  <label class="f" style="flex:none">อีเมล<input type="text" id="lgEmail" inputmode="email" autocomplete="email" placeholder="name@example.com"></label>
+  <div><button class="btn pri" id="lgGo">ส่งลิงก์เข้าสู่ระบบ</button></div><div id="lgMsg" class="note" role="status"></div>`)}
+function noAccessGate(why){return gateCard(`<h2>ยังไม่ได้รับสิทธิ์ใช้งาน</h2>
+  <div class="note">บัญชีนี้ล็อกอินได้ แต่ยังไม่ได้กำหนดบทบาท หรือถูกปิดการใช้งาน กรุณาแจ้งเจ้าหน้าที่ผู้ดูแลระบบ${why?'<br>('+esc(why)+')':''}</div>
+  <div><button class="btn" data-logout="1">ออกจากระบบ</button></div>`)}
+function setupGate(){return gateCard(`<h2>ยังไม่ได้ตั้งค่าการเชื่อมต่อ</h2>
+  <div class="note">เปิดไฟล์ config.js แล้วใส่ SUPABASE_URL และ SUPABASE_ANON_KEY ของโปรเจกต์ Supabase (ดูขั้นตอนในคู่มือ)</div>`)}
+function bindGate(){
+  const go=$('#lgGo');if(!go)return;
+  const send=async()=>{
+    const email=$('#lgEmail').value.trim().toLowerCase(),msg=$('#lgMsg');
+    if(!/^\S+@\S+\.\S+$/.test(email)){msg.textContent='กรุณากรอกอีเมลให้ถูกต้อง';return}
+    go.disabled=true;msg.textContent='กำลังส่งลิงก์…';
+    const {error}=await sb.auth.signInWithOtp({email,options:{shouldCreateUser:false,emailRedirectTo:location.origin+location.pathname}});
+    go.disabled=false;
+    if(error)msg.textContent=/signups? not allowed|not found/i.test(error.message)?'อีเมลนี้ยังไม่ได้ลงทะเบียน กรุณาแจ้งเจ้าหน้าที่':'ส่งลิงก์ไม่สำเร็จ: '+error.message;
+    else msg.textContent='ส่งลิงก์ไปที่ '+email+' แล้ว เปิดอีเมลและกดลิงก์บนเครื่องนี้ (ตรวจในกล่องสแปมด้วย)'};
+  go.onclick=send;$('#lgEmail').onkeydown=e=>{if(e.key==='Enter')send()};
+}
+document.addEventListener('click',e=>{if(e.target.closest('[data-logout]')&&sb)sb.auth.signOut()});
+
+function stopSubs(){subsOff.forEach(f=>{try{f()}catch(e){}});subsOff=[]}
+async function handleSession(session){
+  const uid=(session&&session.user&&session.user.id)||null;
+  if(uid===curUid)return; curUid=uid; stopSubs();
+  S.students={};S.shots={};S.actions={};S.sid='';S.draft=null;S.open=null;S.imp=null;S.me=null;
+  if(!uid){S.gate=loginGate();S.ready=true;render();return}
+  S.gate=null;S.ready=false;render();
+  const {data,error}=await sb.from('staff').select('role,display_name,active').eq('user_id',uid).maybeSingle();
+  if(uid!==curUid)return;
+  if(error||!data||!data.active){S.gate=noAccessGate(error&&error.message);S.ready=true;render();return}
+  S.me={name:data.display_name||session.user.email||'',dbRole:data.role};
+  S.role=ROLE_UI[data.role];S.tab=TABS[S.role][0][0];S.canWrite=true;
+  db=makeDb(sb);
+  let first=0;const hit=()=>{if(++first>=3)S.ready=true;refresh()};
+  const err=e=>{toast('เชื่อมต่อฐานข้อมูลไม่สำเร็จ กำลังลองใหม่: '+(e.code||''))};
+  subsOff.push(db.collection('students').onSnapshot(s=>{S.students=snapToMap(s);if(S.sid&&!S.students[S.sid]){S.sid='';S.draft=null}hit()},err));
+  subsOff.push(db.collection('screenings').onSnapshot(s=>{S.shots=snapToMap(s);hit()},err));
+  subsOff.push(db.collection('actions').onSnapshot(s=>{S.actions=snapToMap(s);hit()},err));
+  render();
+}
+(async()=>{
+  S.ready=false;render();
+  if(!CFG.SUPABASE_URL||!CFG.SUPABASE_ANON_KEY||!window.supabase){S.gate=setupGate();S.ready=true;render();return}
+  sb=window.supabase.createClient(CFG.SUPABASE_URL,CFG.SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+  sb.auth.onAuthStateChange((evt,session)=>{handleSession(session)});
+  const {data}=await sb.auth.getSession();handleSession(data.session);
+})();
+</script>
+
+</body>
+</html>
