@@ -257,7 +257,7 @@ function store(k,v){try{if(v===undefined)return localStorage.getItem(k);localSto
 
 const ROLES={officer:'เจ้าหน้าที่',teacher:'ครูประจำชั้น',parent:'ผู้ปกครอง (อสม.)'};
 const TABS={
- officer:[['summary','สรุปผลการดำเนินการ'],['students','นักเรียนและการติดตาม'],['codes','รหัสห้อง'],['audit','Audit Log'],['qr','QR Code']],
+ officer:[['summary','สรุปผลการดำเนินการ'],['students','นักเรียนและการติดตาม'],['codes','รหัสห้อง'],['audit','Audit Log'],['qr','QR Code'],['preview','ทดลองใช้']],
  teacher:[['obs','แบบสังเกต 4 โรค'],['snapT','SNAP-IV (ครู)'],['summary','สรุปผล']],
  parent:[['obsP','แบบสังเกต 4 โรค'],['snapP','SNAP-IV (ไม่บังคับ)'],['summary','สรุปผล']]};
 const tabsOf=()=>TABS[S.role].filter(t=>!(codeCtx&&codeCtx.kind!=='teacher'&&t[0]==='summary'));
@@ -290,7 +290,7 @@ const STAGE={none:['ยังไม่คัดกรอง','p-mute'],normal:['
 const ASTAT={pending:'รอดำเนินการ',screened:'คัดกรองขั้นต่อไปแล้ว',referred:'ส่งต่อแพทย์/สถานพยาบาลแล้ว',follow:'ติดตามต่อเนื่อง / ปิดเคส'};
 
 /* ---------- shell ---------- */
-const TAB_IC={summary:'📊',students:'👧',codes:'🔑',audit:'📜',qr:'📱',obs:'📝',obsP:'📝',snapT:'📋',snapP:'📋'};
+const TAB_IC={summary:'📊',students:'👧',codes:'🔑',audit:'📜',qr:'📱',preview:'🔍',obs:'📝',obsP:'📝',snapT:'📋',snapP:'📋'};
 function renderShell(){
   const rb=$('#roles');rb.className='userbar';
   rb.innerHTML=S.me?`<span class="note"><b>${esc(S.me.label||S.me.name)}</b>${S.me.label?'':' · '+ROLES[S.role]}</span>${S.role==='officer'?'<button class="btn sm" data-setpw="1">ตั้งรหัสผ่าน</button>':''}<button class="btn sm" data-logout="1">${pv?'ออกจากโหมดนี้':'ออกจากระบบ'}</button>`:'';
@@ -316,7 +316,8 @@ function render0(){
   if(S.dbErr){a.innerHTML='<div class="card empty">เปิดฐานข้อมูลไม่ได้ในมุมมองนี้ กรุณาเปิดผ่านบัญชีที่ลงชื่อเข้าใช้แล้ว</div>';return}
   if(S.tab==='summary')a.innerHTML=viewSummary();
   else if(S.tab==='students')a.innerHTML=viewStudents();
-  else if(S.tab==='codes'){a.innerHTML='<div class="stack">'+viewCodes()+(S.codes===null?'':pvCard())+'</div>';bindCodes();bindPv();return}
+  else if(S.tab==='codes'){a.innerHTML='<div class="stack">'+viewCodes()+'</div>';bindCodes();const pg=$('#pvGo');if(pg)pg.onclick=()=>{S.tab='preview';render()};return}
+  else if(S.tab==='preview'){a.innerHTML='<div class="stack">'+pvCard()+'</div>';bindPv();return}
   else if(S.tab==='audit'){a.innerHTML=viewAudit();bindAudit();return}
   else if(S.tab==='qr'){a.innerHTML=viewQr();bindQr();return}
   else a.innerHTML=viewForm();
@@ -931,7 +932,7 @@ function pvCard(){
   <div><b>${k==='asm'?'อสม. — เลือกหมู่บ้านที่ต้องการดู':'ครู — เลือกโรงเรียนที่ต้องการดู (ทุกชั้น)'}</b></div>
   <div class="row">${chips}</div></div>`}
 function bindPv(){
-  const pg=$('#pvGo');if(pg)pg.onclick=()=>{const c=$('#pvCard');if(c)c.scrollIntoView({behavior:'smooth',block:'start'})};
+  
   document.querySelectorAll('[data-pvk]').forEach(b=>b.onclick=()=>{S.pvKind=b.dataset.pvk;render()});
   document.querySelectorAll('[data-pvs]').forEach(b=>b.onclick=()=>startPreview('teacher',b.dataset.pvs,''));
   document.querySelectorAll('[data-pvv]').forEach(b=>b.onclick=()=>startPreview('asm','',b.dataset.pvv))}
@@ -953,7 +954,7 @@ function startPreview(kind,school,village){
 async function exitPreview(){
   pv=null;codeCtx=null;curUid=undefined;
   S.students={};S.shots={};S.actions={};S.sid='';S.draft=null;S.school='';S.grade='';S.me=null;
-  const {data}=await sb.auth.getSession();await handleSession(data.session);S.tab='codes';render()}
+  const {data}=await sb.auth.getSession();await handleSession(data.session);S.tab='preview';render()}
 
 /* ---------- เจ้าหน้าที่: Audit Log (ประวัติการใช้งาน อ่านอย่างเดียว) ---------- */
 S.audit=null;S.auditFilter={tbl:'',op:'',q:'',d:''};
