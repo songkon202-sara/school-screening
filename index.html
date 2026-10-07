@@ -677,7 +677,7 @@ function liveResult(){
     r=scoreObs(D.answers);
     OBS.forEach(s=>{const el=$('#sc_'+s.key);if(el){el.textContent=r.scores[s.key]+'/10 คะแนน';el.className='pill '+(r.flags[s.key]?'p-bad':'p-mute')}});
     const fl=OBS.filter(s=>r.flags[s.key]);
-    html=fl.length?`<div class="res bad"><b>พบแนวโน้ม ${fl.length} ภาวะ (ตอบ “ใช่” ตั้งแต่ 6 ข้อขึ้นไป)</b>${fl.map(s=>`<div>• ${COND[s.key]}: ${OBS_NEXT[s.key]}</div>`).join('')}</div>`
+    html=fl.length?`<div class="res bad"><b>พบแนวโน้ม ${fl.length} ภาวะ (ตอบ “ใช่” ตั้งแต่ 6 ข้อขึ้นไป)</b>${fl.map(s=>`<div>• ${COND[s.key]}: ${OBS_NEXT[s.key]}</div>`).join('')}${r.flags.adhd&&tabsOf().some(t=>t[0]===(S.tab==='obs'?'snapT':'snapP'))?`<div style="margin-top:10px"><button class="btn pri" id="goSnap" ${S.canWrite===false?'disabled':''}>📋 ทำ SNAP-IV ให้เด็กคนนี้ต่อ</button><div class="note">ระบบจะบันทึกแบบสังเกตก่อน แล้วเปิดแบบ SNAP-IV ของเด็กคนนี้ให้ทันที</div></div>`:''}</div>`
       :`<div class="res ok"><b>ยังไม่พบหมวดที่ถึงเกณฑ์ (ต่ำกว่า 6 คะแนนทุกหมวด)</b></div>`;
   }else{
     const who=S.tab==='snapT'?'T':'P';r=scoreSnap(D.answers,who);
@@ -689,6 +689,7 @@ function liveResult(){
   const pbT=$('#pbTxt');if(pbT){pbT.textContent='ตอบแล้ว '+done+'/'+total+' ข้อ';$('#pbSub').textContent=done<total?'ข้อที่ไม่ตอบนับเป็น 0':'ครบทุกข้อ ✓';$('#pbFill').style.width=pct(done,total)+'%';
     const L=isObsTab(S.tab)?OBS:SNAP;$('#pbPills').innerHTML=L.map(x=>`<span class="pill ${r.flags[x.key]?'p-bad':'p-mute'}">${isObsTab(S.tab)?COND[x.key]:x.title.replace('อาการ','')}: ${r.scores[x.key]}</span>`).join('')}
   box.innerHTML=`<div class="note">ตอบแล้ว ${done}/${total} ข้อ${done<total?' (ข้อที่ไม่ตอบนับเป็น 0 คะแนน)':''}</div>`+html;
+  const gs=$('#goSnap');if(gs)gs.onclick=()=>saveForm(true);
 }
 function bindForm(){
   const on=$('#onlyNeed');if(on)on.onchange=()=>{S.onlyNeed=on.checked;S.sid='';S.draft=null;render()};
@@ -706,12 +707,12 @@ function bindForm(){
   bind('#resp','respondent');bind('#dt','date');bind('#rel','rel');bind('#avg','avg');
   $('#saveForm').onclick=saveForm;liveResult();
 }
-async function saveForm(){
+async function saveForm(goSnap){
   const D=S.draft;if(!D.respondent.trim()){toast('กรุณากรอกชื่อผู้ตอบ');$('#resp').focus();return}
   const who=S.tab==='snapT'?'T':'P';
   const r=isObsTab(S.tab)?scoreObs(D.answers):scoreSnap(D.answers,who);
   const doc={studentId:S.sid,type:S.tab,answers:D.answers,respondent:D.respondent.trim(),rel:D.rel||'',date:D.date,avg:D.avg||'',scores:r.scores,flags:r.flags,updatedAt:Date.now()};
-  try{await db.doc('screenings/'+formDocId()).set(doc);toast('บันทึกแล้ว ✓ เลือกเด็กคนถัดไปได้เลย');S.sid='';S.draft=null;render();window.scrollTo(0,0)}
+  try{await db.doc('screenings/'+formDocId()).set(doc);if(goSnap===true&&isObsTab(S.tab)){S.tab=S.tab==='obs'?'snapT':'snapP';S.draft=null;toast('บันทึกแบบสังเกตแล้ว ✓ ทำ SNAP-IV ให้เด็กคนนี้ต่อได้เลย')}else{toast('บันทึกแล้ว ✓ เลือกเด็กคนถัดไปได้เลย');S.sid='';S.draft=null}render();window.scrollTo(0,0)}
   catch(e){toast('บันทึกไม่ได้: '+(e.code||'ไม่ทราบสาเหตุ'))}
 }
 
