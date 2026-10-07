@@ -297,7 +297,7 @@ const ASTAT={pending:'รอดำเนินการ',screened:'คัดก�
 const TAB_IC={summary:'📊',students:'👧',codes:'🔑',audit:'📜',qr:'📱',preview:'🔍',users:'👥',obs:'📝',obsP:'📝',snapT:'📋',snapP:'📋'};
 function renderShell(){
   const rb=$('#roles');rb.className='userbar';
-  rb.innerHTML=S.me?`<span class="note"><b>${esc(S.me.label||S.me.name)}</b>${S.me.label?'':' · '+ROLES[S.role]}</span>${S.role==='officer'?'<button class="btn sm" data-setpw="1">ตั้งรหัสผ่าน</button>':''}<button class="btn sm" data-logout="1">${pv?'ออกจากโหมดนี้':'ออกจากระบบ'}</button>`:'';
+  rb.innerHTML=S.me?`<span class="note"><b>${esc(S.me.label||S.me.name)}</b>${S.me.label?'':' · '+ROLES[S.role]}</span>${S.role==='officer'?'<button class="btn sm" data-setpw="1">ตั้งรหัสผ่าน</button>':''}<button class="btn sm" data-logout="1">${(pv||S.back)?'ออกจากโหมดนี้':'ออกจากระบบ'}</button>`:'';
   if(!S.me){$('#tabs').innerHTML='';return}
   if(!tabsOf().some(t=>t[0]===S.tab))S.tab=tabsOf()[0][0];
   $('#tabs').innerHTML=tabsOf().map(([k,v])=>`<button role="tab" data-tab="${k}" data-ic="${TAB_IC[k]||'•'}" aria-selected="${S.tab===k}">${v}</button>`).join('');
@@ -318,22 +318,23 @@ function render0(){
   if(S.gate){a.innerHTML=S.gate;bindGate();return}
   if(!S.ready){a.innerHTML='<div class="empty">กำลังโหลดข้อมูล…</div>';return}
   if(S.dbErr){a.innerHTML='<div class="card empty">เปิดฐานข้อมูลไม่ได้ในมุมมองนี้ กรุณาเปิดผ่านบัญชีที่ลงชื่อเข้าใช้แล้ว</div>';return}
-  if(S.tab==='summary')a.innerHTML=viewSummary();
-  else if(S.tab==='students')a.innerHTML=viewStudents();
+  if(S.tab==='summary')a.innerHTML=syBar()+viewSummary();
+  else if(S.tab==='students')a.innerHTML=syBar()+viewStudents();
   else if(S.tab==='codes'){const qm=S.codeSub==='qr';
     const seg=`<div class="row segs" style="margin-bottom:14px"><button class="btn ${qm?'':'pri'}" data-csub="one">🔑 สร้างรหัสรายห้อง/หมู่บ้าน</button><button class="btn ${qm?'pri':''}" data-csub="qr">📱 QR ทั้งโรงเรียน/หมู่บ้าน</button></div>`;
     a.innerHTML=seg+(qm?viewQr():'<div class="stack">'+viewCodes()+'</div>');
     if(qm)bindQr();else{bindCodes();const pg=$('#pvGo');if(pg)pg.onclick=()=>{S.tab='users';S.userSub='preview';render()}}
     document.querySelectorAll('[data-csub]').forEach(b=>b.onclick=()=>{S.codeSub=b.dataset.csub;render()});return}
   else if(S.tab==='audit'){a.innerHTML=viewAudit();bindAudit();return}
-  else if(S.tab==='users'){const um=['staffcodes','list','preview'].includes(S.userSub)?S.userSub:'staffcodes';
-    const seg=`<div class="row segs" style="margin-bottom:14px"><button class="btn ${um==='staffcodes'?'pri':''}" data-usub="staffcodes">🔑 รหัสเจ้าหน้าที่</button><button class="btn ${um==='list'?'pri':''}" data-usub="list">👥 บัญชีผู้ดูแลระบบ</button><button class="btn ${um==='preview'?'pri':''}" data-usub="preview">🔍 ทดลองใช้ (ดูหน้าจอครู/อสม.)</button></div>`;
-    a.innerHTML=seg+(um==='preview'?'<div class="stack">'+pvCard()+'</div>':um==='list'?viewUsers():viewStaffCodes());
-    if(um==='preview')bindPv();else if(um==='list')bindUsers();else bindStaffCodes();
+  else if(S.tab==='users'){const um=['staffcodes','sy','list','preview'].includes(S.userSub)?S.userSub:'staffcodes';
+    const seg=`<div class="row segs" style="margin-bottom:14px"><button class="btn ${um==='staffcodes'?'pri':''}" data-usub="staffcodes">🔑 รหัสเจ้าหน้าที่</button><button class="btn ${um==='sy'?'pri':''}" data-usub="sy">📅 ปีการศึกษา</button><button class="btn ${um==='list'?'pri':''}" data-usub="list">👥 บัญชีผู้ดูแลระบบ</button><button class="btn ${um==='preview'?'pri':''}" data-usub="preview">🔍 ทดลองใช้ (ดูหน้าจอครู/อสม.)</button></div>`;
+    a.innerHTML=seg+(um==='preview'?'<div class="stack">'+pvCard()+'</div>':um==='list'?viewUsers():um==='sy'?viewSy():viewStaffCodes());
+    if(um==='preview')bindPv();else if(um==='list')bindUsers();else if(um==='sy')bindSy();else bindStaffCodes();
     document.querySelectorAll('[data-usub]').forEach(b=>b.onclick=()=>{S.userSub=b.dataset.usub;render()});return}
   else a.innerHTML=viewForm();
   if(isForm())bindForm();
-  if(S.tab==='summary'||S.tab==='students')bindOfficer();
+  if(S.tab==='summary'||S.tab==='students'){bindOfficer();bindSyBar()}
+  if(S.back)a.insertAdjacentHTML('afterbegin',`<div class="card" style="border-color:var(--warn,#d9a441);margin-bottom:12px"><b>📝 โหมดคีย์ข้อมูลย้อนหลังจากเอกสาร ปีการศึกษา ${S.back}</b><div class="note">ทุกอย่างที่บันทึกจะลงปี ${S.back} เท่านั้น เสร็จแล้วกด “ออกจากโหมดนี้” มุมขวาบน</div></div>`);
 }
 
 /* ---------- สรุปผล ---------- */
@@ -632,8 +633,8 @@ function formDocId(){return S.sid?S.sid+'_'+S.tab:''}
 function loadDraft(){
   const ex=S.shots[formDocId()];
   const n=isObsTab(S.tab)?40:SNAP_N;
-  S.draft=ex?{answers:[...ex.answers],respondent:ex.respondent||'',date:ex.date||new Date().toISOString().slice(0,10),rel:ex.rel||'',avg:ex.avg||'',term:ex.term||''}
-    :{answers:Array(n).fill(null),respondent:(S.me&&S.me.name)||'',date:new Date().toISOString().slice(0,10),rel:(S.tab==='snapP'||S.tab==='obsP')?(codeCtx&&codeCtx.kind==='asm'?'อสม.':'ผู้ปกครอง'):'',avg:'',term:''};
+  S.draft=ex?{answers:[...ex.answers],respondent:ex.respondent||'',date:ex.date||(S.back?'':new Date().toISOString().slice(0,10)),rel:ex.rel||'',avg:ex.avg||'',term:ex.term||'',gradeAt:ex.gradeAt||''}
+    :{answers:Array(n).fill(null),respondent:(S.me&&S.me.name)||'',date:S.back?'':new Date().toISOString().slice(0,10),gradeAt:'',rel:(S.tab==='snapP'||S.tab==='obsP')?(codeCtx&&codeCtx.kind==='asm'?'อสม.':'ผู้ปกครอง'):'',avg:'',term:''};
 }
 function viewForm(){
   const ids=Object.keys(S.students).sort((a,b)=>S.students[a].name.localeCompare(S.students[b].name,'th'));
@@ -651,7 +652,7 @@ function viewForm(){
   :`<input type="search" id="stQ" aria-label="ค้นหานักเรียน" placeholder="🔍 ค้นหาชื่อนักเรียน" value="${esc(S.q||'')}" autocomplete="off">
   <div class="stlist">${list.map(i=>{const dn=!!S.shots[i+'_'+S.tab],st=S.students[i];return `<button class="stbtn ${dn?'done':''}" data-sid="${i}"><span><b>${esc(st.name)}</b><small>${esc(st.grade||'')}${!S.school&&st.school?' · '+esc(st.school):''}${S.tab==='snapT'&&derive(i).needSnap?' · ⚑ ต้องทำ SNAP-IV':''}</small></span><span class="pill ${dn?'p-ok':'p-mute'}">${dn?'✓ กรอกแล้ว':'ยังไม่กรอก'}</span></button>`}).join('')||(ids.length?'<div class="empty">ไม่พบรายชื่อ</div>':'<div class="empty">ยังไม่มีรายชื่อนักเรียน '+(S.role==='parent'?'กรุณาแจ้งเจ้าหน้าที่หรือครูประจำชั้น':'เพิ่มรายชื่อนักเรียนก่อน')+'</div>')}</div>`}
   ${S.tab==='snapT'?`<label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="onlyNeed" ${S.onlyNeed?'checked':''}> แสดงเฉพาะนักเรียนที่ต้องทำ SNAP-IV (${ids.filter(i=>derive(i).needSnap).length} คน)</label>`:''}
-  ${S.role!=='parent'&&!codeCtx?'<details id="addBox"><summary class="btn sm" style="display:inline-block">+ เพิ่มนักเรียนใหม่</summary><div style="margin-top:12px">'+studentForm().replace('class="card stack"','class="stack"').replace('<h2>เพิ่มนักเรียน</h2>','')+'</div></details>':''}
+  ${S.role!=='parent'&&!codeCtx&&!S.back?'<details id="addBox"><summary class="btn sm" style="display:inline-block">+ เพิ่มนักเรียนใหม่</summary><div style="margin-top:12px">'+studentForm().replace('class="card stack"','class="stack"').replace('<h2>เพิ่มนักเรียน</h2>','')+'</div></details>':''}
   </div>`;
   if(!S.sid){return h+'</div>'}
   if(!S.draft)loadDraft();
@@ -661,6 +662,7 @@ function viewForm(){
   <label class="f"><span>${(S.tab==='snapP'||S.tab==='obsP')?'ชื่อผู้ตอบ':'ชื่อครูผู้ตอบ'}</span><input type="text" id="resp" value="${esc(D.respondent)}"></label>
   ${(S.tab==='snapP'||S.tab==='obsP')?`<label class="f" style="flex-basis:150px;flex-grow:0">เป็น<select id="rel"><option ${D.rel==='ผู้ปกครอง'?'selected':''}>ผู้ปกครอง</option><option ${D.rel==='อสม.'?'selected':''}>อสม.</option></select></label>`:''}
   <label class="f" style="flex-basis:160px;flex-grow:0">วันที่ประเมิน<input type="date" id="dt" value="${esc(D.date)}"></label>
+  ${S.back?`<label class="f" style="flex-basis:170px;flex-grow:0">ชั้นขณะนั้น (ปี ${S.back})<input type="text" id="gat" maxlength="20" placeholder="${esc(stu.grade||'')}" value="${esc(D.gradeAt||'')}"></label>`:''}
   ${S.tab==='snapT'?`<label class="f" style="flex-basis:110px;flex-grow:0">เกรดเฉลี่ย<input type="text" id="avg" value="${esc(D.avg)}"></label>`:''}</div></div>`;
   h+=`<div class="pbar"><div class="row" style="justify-content:space-between;align-items:baseline"><b id="pbTxt"></b><span class="note" id="pbSub"></span></div><div class="bar"><i id="pbFill" style="width:0;background:var(--accent)"></i></div><div class="row" id="pbPills"></div></div>`;
   if(isObsTab(S.tab)){
@@ -715,14 +717,14 @@ function bindForm(){
   const D=S.draft;
   document.querySelectorAll('input[type=radio]').forEach(r=>r.onchange=()=>{D.answers[+r.name.slice(1)]=+r.value;liveResult()});
   const bind=(id,k)=>{const e=$(id);if(e)e.oninput=e.onchange=()=>D[k]=e.value};
-  bind('#resp','respondent');bind('#dt','date');bind('#rel','rel');bind('#avg','avg');
+  bind('#resp','respondent');bind('#dt','date');bind('#gat','gradeAt');bind('#rel','rel');bind('#avg','avg');
   $('#saveForm').onclick=saveForm;liveResult();
 }
 async function saveForm(goSnap){
   const D=S.draft;if(!D.respondent.trim()){toast('กรุณากรอกชื่อผู้ตอบ');$('#resp').focus();return}
   const who=S.tab==='snapT'?'T':'P';
   const r=isObsTab(S.tab)?scoreObs(D.answers):scoreSnap(D.answers,who);
-  const doc={studentId:S.sid,type:S.tab,answers:D.answers,respondent:D.respondent.trim(),rel:D.rel||'',date:D.date,avg:D.avg||'',scores:r.scores,flags:r.flags,updatedAt:Date.now()};
+  const doc={studentId:S.sid,type:S.tab,answers:D.answers,respondent:D.respondent.trim(),rel:D.rel||'',date:D.date,avg:D.avg||'',gradeAt:S.back?(D.gradeAt||'').trim():'',scores:r.scores,flags:r.flags,updatedAt:Date.now()};
   try{await db.doc('screenings/'+formDocId()).set(doc);if(goSnap===true&&isObsTab(S.tab)){S.tab=S.tab==='obs'?'snapT':'snapP';S.draft=null;toast('บันทึกแบบสังเกตแล้ว ✓ ทำ SNAP-IV ให้เด็กคนนี้ต่อได้เลย')}else{toast('บันทึกแล้ว ✓ เลือกเด็กคนถัดไปได้เลย');S.sid='';S.draft=null}render();window.scrollTo(0,0)}
   catch(e){toast('บันทึกไม่ได้: '+(e.code||'ไม่ทราบสาเหตุ'))}
 }
@@ -741,13 +743,14 @@ window.STANDALONE=true;
 const CFG=window.APP_CONFIG||{};
 const ROLE_UI={officer:'officer',teacher:'teacher',asm:'parent'};
 let sb=null,curUid=undefined,subsOff=[];
+S.sy=null;S.syCur=null;S.syYears=[];S.back=null;S.meOff=null;
 
 function dbError(e){const x=new Error(e.message||'error');x.code=(e.code==='42501'||/row-level security/i.test(e.message||''))?'ไม่มีสิทธิ์ทำรายการนี้':(e.message||e.code||'ไม่ทราบสาเหตุ');return x}
 function makeDb(sb){
   const T={
     students:{cols:'id,name,cid,age,grade,school,village,created_at',key:'id',filter:q=>q.is('deleted_at',null),doc:r=>({name:r.name,cid:r.cid||'',age:r.age||'',grade:r.grade||'',school:r.school||'',village:r.village||''})},
-    screenings:{cols:'id,student_id,type,answers,respondent,rel,date,avg,scores,flags,updated_at',key:'id',doc:r=>({studentId:r.student_id,type:r.type,answers:r.answers,respondent:r.respondent||'',rel:r.rel||'',date:r.date||'',avg:r.avg||'',scores:r.scores,flags:r.flags})},
-    actions:{cols:'student_id,conds,updated_at',key:'student_id',doc:r=>({conds:r.conds||{}})}};
+    screenings:{cols:'id,student_id,type,answers,respondent,rel,date,avg,scores,flags,updated_at'+(S.sy?',sy,grade_at':''),key:'id',filter:q=>S.sy?q.eq('sy',S.sy):q,doc:r=>({gradeAt:r.grade_at||'',studentId:r.student_id,type:r.type,answers:r.answers,respondent:r.respondent||'',rel:r.rel||'',date:r.date||'',avg:r.avg||'',scores:r.scores,flags:r.flags})},
+    actions:{cols:'student_id,conds,updated_at',key:'student_id',filter:q=>S.sy?q.eq('sy',S.sy):q,doc:r=>({conds:r.conds||{}})}};
   async function fetchAll(t){
     const c=T[t],out=[];
     for(let from=0;;from+=1000){
@@ -777,8 +780,8 @@ function makeDb(sb){
     doc(path){const [t,id]=path.split('/');return {
       set:async o=>{
         let row,conflict;
-        if(t==='screenings'){row={id,student_id:o.studentId,type:o.type,answers:o.answers,respondent:o.respondent||'',rel:o.rel||'',date:o.date||null,avg:o.avg||'',scores:o.scores,flags:o.flags};conflict='id'}
-        else if(t==='actions'){row={student_id:id,conds:o.conds||{}};conflict='student_id'}
+        if(t==='screenings'){row={id,...(S.sy?{sy:S.sy,grade_at:o.gradeAt||''}:{}),student_id:o.studentId,type:o.type,answers:o.answers,respondent:o.respondent||'',rel:o.rel||'',date:o.date||null,avg:o.avg||'',scores:o.scores,flags:o.flags};conflict=S.sy?'id,sy':'id'}
+        else if(t==='actions'){row={student_id:id,...(S.sy?{sy:S.sy}:{}),conds:o.conds||{}};conflict=S.sy?'student_id,sy':'student_id'}
         else throw dbError({message:'unsupported'});
         const {error}=await sb.from(t).upsert(row,{onConflict:conflict});if(error)throw dbError(error)},
       delete:async()=>{
@@ -860,7 +863,7 @@ function openSetPw(){
     close();toast('ตั้งรหัสผ่านเรียบร้อย ครั้งต่อไปเข้าด้วยรหัสผ่านได้');
   };
 }
-document.addEventListener('click',e=>{if(e.target.closest('[data-logout]')){if(pv)exitPreview();else if(codeCtx)exitCode();else if(sb)sb.auth.signOut()}if(e.target.closest('[data-setpw]'))openSetPw()});
+document.addEventListener('click',e=>{if(e.target.closest('[data-logout]')){if(pv)exitPreview();else if(S.back)exitBack();else if(codeCtx)exitCode();else if(sb)sb.auth.signOut()}if(e.target.closest('[data-setpw]'))openSetPw()});
 let pwLogin=false;
 
 /* ---------- เข้าด้วยรหัสห้อง (ครู/ผู้ปกครอง ไม่ต้องล็อกอิน) ---------- */
@@ -1061,11 +1064,12 @@ async function loadAudit(){
   if(a.error){toast('โหลด Audit Log ไม่ได้: '+(a.error.message||''));S.audit=[]}else S.audit=a.data;
   S.staffMap={};(u.data||[]).forEach(x=>{S.staffMap[x.user_id]=x.display_name||ROLES[x.role]||''});
   if(S.tab==='audit')render()}
-const AUD_TBL={students:'นักเรียน',screenings:'แบบประเมิน',actions:'การติดตาม',class_code:'เข้าด้วยรหัสห้อง',staff:'ผู้ใช้งาน'};
+const AUD_TBL={students:'นักเรียน',screenings:'แบบประเมิน',actions:'การติดตาม',class_code:'เข้าด้วยรหัสห้อง',staff:'ผู้ใช้งาน',settings:'ตั้งค่า'};
 const AUD_OP={INSERT:'เพิ่ม',UPDATE:'แก้ไข',DELETE:'ลบ'};
 function audWho(r){return r.user_id?(S.staffMap&&S.staffMap[r.user_id])||'ผู้ใช้ '+String(r.user_id).slice(0,8):(r.tbl==='class_code'?(S.codeMap&&S.codeMap[r.row_id]?'รหัส: '+S.codeMap[r.row_id]:'ผู้ใช้รหัสห้อง'):'ระบบ')}
 function audWhat(r){
   let op=AUD_OP[r.op]||'';let tgt='';
+  if(r.tbl==='settings'){const y=/(\d{4})/.exec(r.op);return 'เปลี่ยนปีการศึกษาที่กำลังเก็บข้อมูล'+(y?' เป็น '+y[1]:'')}
   if(r.tbl==='class_code'){const m=/^SAVE ([0-9a-f-]{36})_(\w+)$/.exec(r.op);if(m){const st=S.students[m[1]];op='บันทึกแบบ '+m[2];tgt=st?st.name:''}else op=r.op}
   else if(r.tbl==='screenings'){const sid=String(r.row_id).split('_')[0];const st=S.students[sid];tgt=(st?st.name:'')+' ('+(String(r.row_id).split('_')[1]||'')+')'}
   else{const st=S.students[r.row_id];tgt=st?st.name:''}
@@ -1233,6 +1237,69 @@ function bindCodes(){
 let codeDelArm=null;
 
 function stopSubs(){subsOff.forEach(f=>{try{f()}catch(e){}});subsOff=[]}
+/* ---------- ปีการศึกษา ---------- */
+async function initYear(role){
+  S.sy=null;S.syCur=null;S.syYears=[];S.back=null;
+  try{
+    const c=await sb.rpc('current_sy');
+    if(!c.error&&c.data){S.syCur=+c.data;S.sy=S.syCur}
+    if(role==='officer'&&S.syCur){const g=await sb.rpc('sy_get');if(!g.error&&g.data)S.syYears=g.data.years||[]}
+  }catch(e){S.sy=null;S.syCur=null}}
+function startOfficerSubs(){
+  stopSubs();
+  let first=0;const hit=()=>{if(++first>=3)S.ready=true;refresh()};
+  const err=e=>{toast('เชื่อมต่อฐานข้อมูลไม่สำเร็จ กำลังลองใหม่: '+(e.code||''))};
+  subsOff.push(db.collection('students').onSnapshot(s=>{S.students=snapToMap(s);if(S.sid&&!S.students[S.sid]){S.sid='';S.draft=null}hit()},err));
+  subsOff.push(db.collection('screenings').onSnapshot(s=>{S.shots=snapToMap(s);hit()},err));
+  subsOff.push(db.collection('actions').onSnapshot(s=>{S.actions=snapToMap(s);hit()},err))}
+function setYear(y){
+  S.sy=y;S.canWrite=!!S.back||y===S.syCur;S.shots={};S.actions={};S.sid='';S.draft=null;S.open=null;
+  db=makeDb(sb);startOfficerSubs();render()}
+function startBack(y){
+  S.meOff=S.me;S.back=y;S.role='staff';S.sy=y;S.canWrite=true;S.tab='obs';S.sid='';S.draft=null;S.open=null;S.shots={};S.actions={};S.school='';S.grade='';
+  S.me={name:'',label:'คีย์ย้อนหลังจากเอกสาร · ปีการศึกษา '+y,dbRole:'back'};
+  db=makeDb(sb);startOfficerSubs();window.scrollTo(0,0);render()}
+async function exitBack(){
+  const g=await sb.rpc('sy_get');if(!g.error&&g.data)S.syYears=g.data.years||S.syYears;
+  S.back=null;S.role='officer';S.me=S.meOff;S.sy=S.syCur;S.canWrite=true;S.tab='users';S.userSub='sy';S.sid='';S.draft=null;S.shots={};S.actions={};
+  db=makeDb(sb);startOfficerSubs();render()}
+function syBar(){
+  if(S.role!=='officer'||!S.syCur||S.back)return '';
+  const ys=[...new Set([S.syCur,...S.syYears.map(Number)])].sort((a,b)=>b-a),old=S.sy!==S.syCur;
+  return `<div class="card stack" style="margin-bottom:12px"><div class="row" style="align-items:center"><label class="f" style="flex:0 1 300px">ปีการศึกษา<select id="sySel">${ys.map(y=>`<option value="${y}" ${y===S.sy?'selected':''}>${y}${y===S.syCur?' (ปีที่กำลังเก็บข้อมูล)':''}</option>`).join('')}</select></label>
+  ${old?`<div class="res bad" style="flex:1 1 260px"><b>กำลังดูข้อมูลย้อนหลังปีการศึกษา ${S.sy}</b> อ่านอย่างเดียว บันทึกหรือแก้ไขไม่ได้ในมุมมองนี้ (คีย์ย้อนหลังจากเอกสารที่แท็บผู้ใช้งาน > ปีการศึกษา)</div>`:''}</div></div>`}
+function bindSyBar(){const f=$('#sySel');if(f)f.onchange=()=>setYear(+f.value)}
+function viewSy(){
+  if(!S.syCur)return '<div class="stack"><div class="card stack"><h2>📅 ปีการศึกษา</h2><div class="res bad"><b>ยังใช้ไม่ได้</b><div class="note">ยังไม่ได้รันไฟล์ 06_fiscal_year.sql (แล้วรัน 03_class_codes.sql ซ้ำ) ใน Supabase</div></div></div></div>'
+  const ys=[...new Set([S.syCur,...S.syYears.map(Number)])].sort((a,b)=>b-a);
+  return `<div class="stack"><div class="card stack"><h2>📅 ปีการศึกษาที่กำลังเก็บข้อมูล: ${S.syCur}</h2>
+  <div class="note">ครู อสม. และเจ้าหน้าที่ที่ใช้รหัส จะบันทึกผลลงปีนี้เท่านั้น รายชื่อเด็กมีชุดเดียว ไม่ต้องนำเข้าใหม่ทุกปี ผลคัดกรองและการติดตามเก็บแยกรายปี ปีการศึกษามีข้อมูลอยู่แล้ว: <b>${ys.join(', ')}</b> (ดูย้อนหลังได้ที่หน้าสรุปผลและหน้านักเรียน โดยเลือกปีด้านบน)</div>
+  <h3>เปลี่ยนปีที่กำลังเก็บข้อมูล (เมื่อขึ้นปีการศึกษาใหม่ ประมาณกลางเดือน พ.ค.)</h3>
+  <div class="note">เมื่อเปลี่ยน ผลคัดกรองปีใหม่จะเริ่มว่าง ข้อมูลปีเก่ายังอยู่ครบ รหัสที่แจกไว้ใช้ต่อได้ แต่จะบันทึกลงปีใหม่ทันที</div>
+  <div class="row"><label class="f" style="flex-basis:200px;flex-grow:0">ปีการศึกษา (พ.ศ.)<input type="number" id="syNew" inputmode="numeric" min="2560" max="2600" value="${S.syCur+1}"></label>
+  <button class="btn pri" id="sySet">เปลี่ยนปี</button></div></div>
+  <div class="card stack"><h2>📝 คีย์ข้อมูลย้อนหลังจากเอกสาร</h2>
+  <div class="note">สำหรับนำผลคัดกรองที่เป็นกระดาษของปีก่อนๆ เข้าระบบ ใช้ฟอร์มเดียวกับครู/ผู้ปกครอง เลือกเด็ก กรอกชื่อผู้ตอบและวันที่ประเมินตามกระดาษ และใส่ชั้นที่เด็กเรียนในปีการศึกษานั้น (ถ้าต่างจากปัจจุบัน) บันทึกลงปีที่เลือกเท่านั้น ไม่กระทบปี ${S.syCur} ผลกระดาษมีชื่อเด็ก ควรเก็บให้ปลอดภัยและทำลายตามระเบียบเมื่อคีย์เสร็จ</div>
+  <div class="row"><label class="f" style="flex-basis:200px;flex-grow:0">ปีการศึกษา (พ.ศ.)<input type="number" id="syBack" inputmode="numeric" min="2560" max="${S.syCur-1}" value="${S.syCur-1}"></label>
+  <button class="btn pri" id="syBackGo">เริ่มคีย์ย้อนหลัง</button></div></div></div>`}
+let syArm=false;
+function bindSy(){
+  const set=$('#sySet');
+  if(set)set.onclick=async()=>{
+    const y=Math.round(+($('#syNew').value));
+    if(!(y>=2560&&y<=2600)){toast('กรอกปี พ.ศ. ให้ถูกต้อง เช่น '+(S.syCur+1));return}
+    if(y===S.syCur){toast('เป็นปีที่ใช้อยู่แล้ว');return}
+    if(!syArm){syArm=true;set.textContent='เปลี่ยนเป็นปี '+y+'? กดอีกครั้งเพื่อยืนยัน';setTimeout(()=>{if(syArm){syArm=false;if(S.tab==='users'&&S.userSub==='sy')render()}},4000);return}
+    syArm=false;set.disabled=true;
+    const {error}=await sb.rpc('sy_set',{p_sy:y});
+    if(error){set.disabled=false;toast('เปลี่ยนไม่ได้: '+(error.message||''));return}
+    S.syCur=y;S.sy=y;if(!S.syYears.map(Number).includes(y))S.syYears=[y,...S.syYears];
+    S.shots={};S.actions={};db=makeDb(sb);startOfficerSubs();toast('เปลี่ยนเป็นปีการศึกษา '+y+' แล้ว ✓');render()};
+  const bg=$('#syBackGo');
+  if(bg)bg.onclick=()=>{
+    const y=Math.round(+($('#syBack').value));
+    if(!(y>=2560&&y<S.syCur)){toast('เลือกปีก่อนปี '+S.syCur+' (พ.ศ.)');return}
+    startBack(y)}}
 async function handleSession(session){
   if(codeCtx)return;
   const uid=(session&&session.user&&session.user.id)||null;
@@ -1247,12 +1314,8 @@ async function handleSession(session){
   pwLogin=false;
   S.me={name:data.display_name||session.user.email||'',dbRole:data.role};
   S.role=ROLE_UI[data.role];S.tab=TABS[S.role][0][0];S.canWrite=true;
-  db=makeDb(sb);
-  let first=0;const hit=()=>{if(++first>=3)S.ready=true;refresh()};
-  const err=e=>{toast('เชื่อมต่อฐานข้อมูลไม่สำเร็จ กำลังลองใหม่: '+(e.code||''))};
-  subsOff.push(db.collection('students').onSnapshot(s=>{S.students=snapToMap(s);if(S.sid&&!S.students[S.sid]){S.sid='';S.draft=null}hit()},err));
-  subsOff.push(db.collection('screenings').onSnapshot(s=>{S.shots=snapToMap(s);hit()},err));
-  subsOff.push(db.collection('actions').onSnapshot(s=>{S.actions=snapToMap(s);hit()},err));
+  await initYear(data.role);if(uid!==curUid)return;
+  db=makeDb(sb);startOfficerSubs();
   render();
 }
 (async()=>{
