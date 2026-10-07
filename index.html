@@ -441,17 +441,19 @@ function importBox(){
   const im=S.imp;
   let h=`<div class="card stack" id="impBox"><h2>แนบไฟล์รายชื่อนักเรียน</h2>
   <div class="note">รองรับไฟล์ .csv (UTF-8) และ .xlsx แถวแรกเป็นหัวตาราง ใช้คอลัมน์ ชื่อ-นามสกุล, เลขบัตรประชาชน (ไม่บังคับ ระบบไม่เก็บและไม่แสดง 5 หลักกลาง), อายุ, ชั้น, โรงเรียน, หมู่บ้าน (ใส่เลขหมู่ 1-9 ไม่บังคับ ใช้กับรหัส อสม.) (หรือแยกเป็น คำนำหน้า / ชื่อ / นามสกุล ก็ได้) ระบบจะแสดงตัวอย่างให้ตรวจก่อนนำเข้า ข้ามชื่อที่ซ้ำกับที่มีอยู่ แต่ถ้าชื่อซ้ำและไฟล์ระบุหมู่บ้านมา ระบบจะเติมหมู่บ้านให้เด็กคนนั้น</div>
+  <div class="note"><b>ปีการศึกษาที่ใช้งานอยู่: ${esc(S.sy||'-')}</b> ต้นปีการศึกษาใหม่ ให้ติ๊กช่องด้านล่าง แล้วแนบไฟล์รายชื่อปีใหม่ ระบบจะเปลี่ยนชั้น/โรงเรียนของเด็กที่มีชื่ออยู่แล้ว และเพิ่มเด็กใหม่ (เช่น ป.1) ส่วนผลคัดกรองของปีเก่ายังเก็บชั้นขณะนั้นไว้เหมือนเดิม</div>
+  <label class="row" style="align-items:center;gap:10px;font-size:17px"><input type="checkbox" id="impUpd" style="width:26px;height:26px;min-height:0" ${S.impUpd?'checked':''}> อัปเดตชั้น/โรงเรียนของเด็กที่มีชื่ออยู่แล้ว (ใช้ต้นปีการศึกษา)</label>
   <div class="row"><label class="f" style="flex-basis:280px">เลือกไฟล์<input type="file" id="impFile" accept=".csv,.xlsx,.xls,text/csv"></label>
   <button class="btn" id="impTpl">ดาวน์โหลดไฟล์แม่แบบ (.csv)</button></div>`;
   if(im){
     if(im.err)h+=`<div class="res bad"><b>${esc(im.err)}</b></div>`;
     else{
-      const ok=im.rows.filter(r=>!r.dup),dup=im.rows.length-ok.length,fill=ok.filter(r=>r.fillId).length;
-      h+=`<div class="res ${ok.length?'ok':'warn'}"><b>ไฟล์ ${esc(im.file)}: พบ ${im.rows.length} แถว นำเข้าได้ ${ok.length-fill} คน${fill?' · เติมหมู่บ้าน '+fill+' คน':''}${dup?' · ซ้ำ/ว่าง ข้าม '+dup+' แถว':''}</b></div>
+      const ok=im.rows.filter(r=>!r.dup),dup=im.rows.length-ok.length,fill=ok.filter(r=>r.fillId).length,upd=ok.filter(r=>r.updId).length;
+      h+=`<div class="res ${ok.length?'ok':'warn'}"><b>ไฟล์ ${esc(im.file)} (ปีการศึกษา ${esc(S.sy||'-')}): พบ ${im.rows.length} แถว เพิ่มใหม่ ${ok.length-fill-upd} คน${upd?' · เปลี่ยนชั้น/โรงเรียน '+upd+' คน':''}${fill?' · เติมหมู่บ้าน '+fill+' คน':''}${dup?' · ซ้ำ/ว่าง ข้าม '+dup+' แถว':''}</b></div>
       <div class="tblw" style="max-height:280px;overflow-y:auto"><table><thead><tr><th>ชื่อ-นามสกุล</th><th>เลขบัตร (ปกปิด)</th><th>อายุ</th><th>ชั้น</th><th>โรงเรียน</th><th>หมู่บ้าน</th><th></th></tr></thead><tbody>
-      ${im.rows.slice(0,200).map(r=>`<tr><td>${esc(r.name)}</td><td>${esc(r.cidMask||'-')}${r.cidBad?' <span class="pill p-warn">เลขไม่ถูกต้อง ไม่เก็บ</span>':''}</td><td>${esc(r.age)}</td><td>${esc(r.grade)}</td><td>${esc(r.school)}</td><td>${esc(r.village?vName(r.village):'')}</td><td>${r.dup?'<span class="pill p-mute">'+esc(r.dup)+'</span>':r.fillId?'<span class="pill p-info">เติมหมู่บ้าน</span>':'<span class="pill p-ok">นำเข้า</span>'}</td></tr>`).join('')}
+      ${im.rows.slice(0,200).map(r=>`<tr><td>${esc(r.name)}</td><td>${esc(r.cidMask||'-')}${r.cidBad?' <span class="pill p-warn">เลขไม่ถูกต้อง ไม่เก็บ</span>':''}</td><td>${esc(r.age)}</td><td>${esc(r.grade)}</td><td>${esc(r.school)}</td><td>${esc(r.village?vName(r.village):'')}</td><td>${r.dup?'<span class="pill p-mute">'+esc(r.dup)+'</span>':r.updId?'<span class="pill p-info">เปลี่ยนชั้น'+(r.updFrom?' (เดิม '+esc(r.updFrom)+')':'')+'</span>':r.fillId?'<span class="pill p-info">เติมหมู่บ้าน</span>':'<span class="pill p-ok">นำเข้า</span>'}</td></tr>`).join('')}
       </tbody></table></div>${im.rows.length>200?'<div class="note">แสดง 200 แถวแรก</div>':''}
-      <div class="row"><button class="btn pri" id="impGo" ${(!ok.length||S.canWrite===false)?'disabled':''}>${fill?'นำเข้า/อัปเดต':'นำเข้า'} ${ok.length} คน</button><button class="btn" id="impCancel">ยกเลิก</button></div>`;
+      <div class="row"><button class="btn pri" id="impGo" ${(!ok.length||S.canWrite===false)?'disabled':''}>${(fill||upd)?'นำเข้า/อัปเดต':'นำเข้า'} ${ok.length} คน</button><button class="btn" id="impCancel">ยกเลิก</button></div>`;
     }
   }
   return h+'</div>';
@@ -508,23 +510,48 @@ async function readRosterFile(file){
   }
   return rowsToStudents(grid);
 }
+function buildImp(){
+  const im=S.imp;if(!im||!im.raw)return;
+  const rows=im.raw.map(r=>Object.assign({},r));
+  const seen=new Set(),existing={};Object.keys(S.students).forEach(id=>{const x=S.students[id],k=[x.name,x.school||'',x.grade||'',x.cid||''].join('|');seen.add(k);existing[k]=id});
+  const byName={};Object.keys(S.students).forEach(id=>{const n=S.students[id].name.replace(/\s+/g,'');(byName[n]=byName[n]||[]).push(id)});
+  const used=new Set();
+  rows.forEach(r=>{
+    if(!r.name){r.dup='ไม่มีชื่อ';return}
+    const k=[r.name,r.school,r.grade,r.cidMask].join('|');
+    if(S.impUpd){
+      const c=(byName[r.name.replace(/\s+/g,'')]||[]).filter(id=>!used.has(id));
+      let m=c;
+      if(c.length>1&&r.cidMask)m=c.filter(id=>S.students[id].cid===r.cidMask);
+      if(m.length>1&&r.school)m=m.filter(id=>(S.students[id].school||'')===r.school);
+      if(m.length===1){
+        const x=S.students[m[0]];used.add(m[0]);
+        const chg=(r.grade&&r.grade!==(x.grade||''))||(r.school&&r.school!==(x.school||''))||(r.age&&r.age!==(x.age||''))||(r.village&&r.village!==(x.village||''));
+        if(!chg){r.dup='ไม่เปลี่ยน';return}
+        r.updId=m[0];r.updFrom=[x.school,x.grade].filter(Boolean).join(' ');return;
+      }
+      if(m.length>1){r.dup='ชื่อซ้ำหลายคน ข้าม';return}
+      if(seen.has(k)){r.dup='ซ้ำในไฟล์';return}
+      seen.add(k);return;
+    }
+    if(seen.has(k)){const eid=existing[k];if(eid&&r.village&&S.students[eid].village!==r.village&&!r._used){r.fillId=eid;existing[k]=null}else r.dup='ซ้ำ'}else seen.add(k);
+  });
+  im.rows=rows;
+}
 function bindImport(){
+  const cb=$('#impUpd');if(cb)cb.onchange=()=>{S.impUpd=cb.checked;buildImp();render()};
   const f=$('#impFile');
   if(f)f.onchange=async()=>{
     const file=f.files[0];if(!file)return;
     try{
       const rows=await readRosterFile(file);
-      const seen=new Set(),existing={};Object.keys(S.students).forEach(id=>{const x=S.students[id],k=[x.name,x.school||'',x.grade||'',x.cid||''].join('|');seen.add(k);existing[k]=id});
       rows.forEach(r=>{
         const d=String(r.cid||'').replace(/\D/g,'');delete r.cid;r.cidMask='';
         if(d){const m=maskId(d);if(m)r.cidMask=m;else r.cidBad=true}
-        if(!r.name){r.dup='ไม่มีชื่อ';return}
-        const k=[r.name,r.school,r.grade,r.cidMask].join('|');
-        if(seen.has(k)){const eid=existing[k];if(eid&&r.village&&S.students[eid].village!==r.village&&!r._used){r.fillId=eid;existing[k]=null}else r.dup='ซ้ำ'}else seen.add(k);
       });
-      S.imp=rows.length?{file:file.name,rows}:{file:file.name,rows:[],err:'ไม่พบรายชื่อในไฟล์นี้ ตรวจว่าแถวแรกเป็นหัวตารางและมีคอลัมน์ชื่อ'};
+      S.imp=rows.length?{file:file.name,raw:rows,rows:[]}:{file:file.name,rows:[],err:'ไม่พบรายชื่อในไฟล์นี้ ตรวจว่าแถวแรกเป็นหัวตารางและมีคอลัมน์ชื่อ'};
     }catch(e){S.imp={file:file.name,rows:[],err:e.message||'อ่านไฟล์ไม่ได้'}}
-    render();const b=$('#impBox');b&&b.scrollIntoView({block:'nearest'});
+    buildImp();render();const b=$('#impBox');b&&b.scrollIntoView({block:'nearest'});
   };
   const t=$('#impTpl');if(t)t.onclick=async()=>{
     if(!dl){toast('เบราว์เซอร์นี้ส่งออกไฟล์ไม่ได้');return}
@@ -539,6 +566,7 @@ async function importRows(){
   try{
     for(let i=0;i<rows.length;i+=20){
       await Promise.all(rows.slice(i,i+20).map(async r=>{
+        if(r.updId){const u={};if(r.grade)u.grade=r.grade;if(r.school)u.school=r.school;if(r.age)u.age=r.age;if(r.village)u.village=r.village;const {error}=await sb.from('students').update(u).eq('id',r.updId);if(error)throw dbError(error);return}
         if(r.fillId){const {error}=await sb.from('students').update({village:r.village}).eq('id',r.fillId);if(error)throw dbError(error);return}
         return db.collection('students').add({name:r.name,cid:r.cidMask||'',age:r.age,grade:r.grade,school:r.school,village:r.village||'',createdAt:Date.now()})}));
       n=Math.min(i+20,rows.length);
