@@ -1003,7 +1003,8 @@ function viewQr(){
   <div class="note">QR นี้เปิดหน้าเข้าสู่ระบบเท่านั้น ไม่มีรหัสอยู่ในนั้น ใช้ติดประกาศหรือส่งทาง LINE ได้</div>
   <div class="pgrid" style="grid-template-columns:minmax(0,260px)"><div class="pcard"><div class="pt">ระบบคัดกรอง 4 กลุ่มโรคและสมาธิสั้น</div><div class="pq">${qrSvg(APPURL())||''}</div><div class="pn">${esc(APPURL())}</div></div></div></div>
   <div class="card stack"><h2>สร้างรหัสทั้งหมดพร้อม QR</h2>
-  <div class="note">สร้างรหัสครูให้ทุกโรงเรียน (ทุกชั้น) และรหัส อสม. ครบ 9 หมู่บ้านในครั้งเดียว ได้ใบรหัสพร้อม QR สำหรับพิมพ์หรือบันทึก PDF QR พาเข้าใช้งานโดยอัตโนมัติ รหัสมีอายุ 30 วัน (ถ้าต้องการอายุอื่นหรือสร้างรายเดียว ใช้แท็บรหัสห้อง)</div>
+  <div class="note">สร้างรหัสครูให้ทุกโรงเรียน (ทุกชั้น) และรหัส อสม. ครบ 9 หมู่บ้านในครั้งเดียว ได้ใบรหัสพร้อม QR สำหรับพิมพ์หรือบันทึก PDF QR พาเข้าใช้งานโดยอัตโนมัติ เลือกวันหมดอายุได้ด้านล่าง (ค่าเริ่มต้น 30 วัน) ถ้าต้องการสร้างรายเดียว ใช้แท็บรหัสห้อง</div>
+  <div class="row" style="align-items:flex-end">${expPicker('qrExp',S.qrExp||addDays(30))}</div>
   <label style="display:flex;gap:10px;align-items:flex-start"><input type="checkbox" id="qrRegen" ${S.qrRegen?'checked':''} style="width:22px;height:22px;margin-top:2px"><span>สร้างใหม่ให้ทุกโรงเรียนและหมู่บ้าน แม้มีรหัสอยู่แล้ว <span class="note">(ระบบจะปิดรหัสเดิมให้อัตโนมัติ รหัสเก่าที่แจกไปแล้วจะใช้ไม่ได้)</span></span></label>
   <div class="row" style="align-items:center"><button class="btn pri" id="cdAll" ${pl.items.length?'':'disabled'}>⚡ สร้างครบทุกโรงเรียนและ 9 หมู่บ้าน (${pl.items.length} รหัส)</button><span class="note" style="flex:1 1 220px">${pl.items.length?'ต้องกดยืนยันอีกครั้ง':'ทุกโรงเรียนและหมู่บ้านมีรหัสใช้งานอยู่แล้ว'}${pl.skipped.length?' · ข้าม '+pl.skipped.length+' รายการที่มีรหัสใช้งานอยู่แล้ว (ติ๊กช่องด้านบนถ้าต้องการสร้างใหม่ทับ)':''}</span></div></div>`;
   if(S.newBatch){h+=`<div class="card stack" id="batchCard"><div class="row noprint" style="justify-content:space-between;align-items:center"><h2>รหัสที่สร้างใหม่ ${S.newBatch.length} รหัส</h2><div class="row"><button class="btn pri" id="bhPrint">🖨️ พิมพ์ / บันทึกเป็น PDF</button><button class="btn" id="bhDone">เสร็จแล้ว ซ่อนรหัสทั้งหมด</button></div></div>
@@ -1011,12 +1012,13 @@ function viewQr(){
   <div class="pgrid">${S.newBatch.map(pcard).join('')}</div></div>`}
   return h+'</div>'}
 function bindQr(){
+  const qe=$('#qrExp');if(qe){qe.onchange=()=>{S.qrExp=qe.value};bindExp(v=>{S.qrExp=v})}
   const rg=$('#qrRegen');if(rg)rg.onchange=()=>{S.qrRegen=rg.checked;allArm=false;render()};
   const ca=$('#cdAll');if(ca)ca.onclick=async()=>{
     const pl=batchPlan(S.qrRegen);if(!pl.items.length)return;
     if(!allArm){allArm=true;ca.textContent='สร้าง '+pl.items.length+' รหัส? กดอีกครั้งเพื่อยืนยัน';setTimeout(()=>{if(allArm){allArm=false;if(S.tab==='qr')render()}},4000);return}
     allArm=false;ca.disabled=true;
-    const days=Math.min(180,Math.max(1,30));const exp=new Date(Date.now()+days*864e5).toISOString();
+    const exp=expIso((qe&&qe.value)||S.qrExp||addDays(30));if(!exp){allArm=false;toast('วันหมดอายุต้องอยู่ระหว่างพรุ่งนี้ถึงไม่เกิน 1 ปี');if(S.tab==='qr')render();return}
     const made=[];for(const it of pl.items){const code=genCode();made.push({it,code,hash:await sha256hex(code)})}
     const {error}=await sb.from('class_codes').insert(made.map(m=>({code_hash:m.hash,label:m.it.title,expires_at:exp,kind:m.it.kind,school:m.it.school,grade:m.it.grade,village:m.it.village})));
     if(error){ca.disabled=false;toast('สร้างรหัสไม่ได้: '+(error.message||''));return}
@@ -1032,7 +1034,14 @@ function bindQr(){
 const CODE_ALPHA='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // 32 ตัว ไม่มี I O 0 1 สับสนง่าย
 function genCode(){const b=new Uint8Array(10);crypto.getRandomValues(b);return Array.from(b,x=>CODE_ALPHA[x%32]).join('')}
 async function sha256hex(t){const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return Array.from(new Uint8Array(d),x=>x.toString(16).padStart(2,'0')).join('')}
-S.codes=null;S.newCode=null;S.newBatch=null;S.qrRegen=false;
+S.codes=null;S.newCode=null;S.newBatch=null;S.qrRegen=false;S.qrExp='';
+const ymd=d=>new Date(d.getTime()+7*36e5).toISOString().slice(0,10);
+const addDays=n=>ymd(new Date(Date.now()+n*864e5));
+const expMin=()=>addDays(1),expMax=()=>addDays(366);
+const expIso=v=>/^\d{4}-\d{2}-\d{2}$/.test(v||'')&&v>=expMin()&&v<=expMax()?new Date(v+'T23:59:59+07:00').toISOString():null;
+function expPicker(id,val){return `<label class="f" style="flex-basis:170px;flex-grow:0">หมดอายุวันที่<input type="date" id="${id}" min="${expMin()}" max="${expMax()}" value="${esc(val)}"></label>
+  <div class="row" style="gap:6px;align-items:center">${[[30,'30 วัน'],[90,'90 วัน'],[180,'6 เดือน'],[365,'1 ปี']].map(([n,t])=>`<button type="button" class="btn sm" data-expd="${n}" data-for="${id}">${t}</button>`).join('')}</div>`}
+function bindExp(onset){document.querySelectorAll('[data-expd]').forEach(b=>b.onclick=()=>{const e=$('#'+b.dataset.for);if(e){e.value=addDays(+b.dataset.expd);onset(e.value)}})}
 function qrSvg(t){try{if(!window.qrcode)return '';const q=qrcode(0,'M');q.addData(t);q.make();return q.createSvgTag(4,2)}catch(e){return ''}}
 const APPURL=()=>location.origin+location.pathname;
 function pcard(n){return `<div class="pcard"><div class="pt">${esc(n.title)}</div><div class="pq">${qrSvg(n.link)||'<div class="note">สร้าง QR ไม่ได้ (ไม่มีอินเทอร์เน็ต)</div>'}</div><div class="pc">${esc(n.code)}</div><div class="pn">สแกน QR หรือพิมพ์รหัสที่<br>${esc(APPURL())}<br>หมดอายุ ${new Date(n.exp).toLocaleDateString('th-TH')}</div></div>`}
@@ -1054,7 +1063,7 @@ function viewCodes(){
   if(S.codes===null){loadCodes();return '<div class="empty">กำลังโหลด…</div>'}
   const all=Object.keys(S.students).map(i=>S.students[i]);
   const schools=[...new Set(all.map(x=>x.school).filter(Boolean))].sort(natSort);
-  const sel=S.codeSel||{school:schools[0]||'',grade:'*',kind:'teacher',days:30,village:'1'};
+  const sel=S.codeSel||{school:schools[0]||'',grade:'*',kind:'teacher',exp:addDays(30),village:'1'};
   const grades=[...new Set(all.filter(x=>x.school===sel.school).map(x=>x.grade).filter(Boolean))].sort(natSort);
   if(sel.grade!=='*'&&!grades.includes(sel.grade))sel.grade='*';S.codeSel=sel;
   const now=Date.now(),asm=sel.kind==='asm';
@@ -1066,7 +1075,7 @@ function viewCodes(){
   ${asm?`<label class="f" style="flex-basis:240px">หมู่บ้าน<select id="cdVillage">${Object.keys(VILLAGES).map(k=>`<option value="${k}" ${sel.village===k?'selected':''}>${esc(vName(k))} (${vCount[k]||0} คน)</option>`).join('')}</select></label>`
   :`<label class="f" style="flex-basis:220px">โรงเรียน<select id="cdSchool">${schools.map(x=>`<option ${sel.school===x?'selected':''}>${esc(x)}</option>`).join('')}</select></label>
   <label class="f" style="flex-basis:190px">ชั้น<select id="cdGrade"><option value="*" ${sel.grade==='*'?'selected':''}>ทุกชั้น (ทั้งโรงเรียน)</option>${grades.map(x=>`<option ${sel.grade===x?'selected':''}>${esc(x)}</option>`).join('')}</select></label>`}
-  <label class="f" style="flex-basis:110px;flex-grow:0">อายุรหัส (วัน)<input type="number" id="cdDays" min="1" max="180" value="${sel.days}"></label>
+  ${expPicker('cdExp',sel.exp||addDays(30))}
   <button class="btn pri" id="cdMake" ${(asm?!all.length:!schools.length)?'disabled':''}>สร้างรหัส</button></div>
   ${asm&&!(vCount[sel.village]>0)?'<div class="note">หมู่บ้านนี้ยังไม่มีเด็กที่ระบุหมู่ รหัสนี้จะเห็นรายชื่อว่างจนกว่าจะกำหนดหมู่บ้านให้เด็ก (นำเข้าไฟล์ที่มีคอลัมน์ "หมู่บ้าน" หรือเลือกในหน้ารายละเอียดนักเรียน)</div>':''}
   ${noVillage?`<div class="note">เด็ก ${noVillage} คนจาก ${all.length} คน ยังไม่ระบุหมู่บ้าน จะไม่ปรากฏในรหัส อสม. ของหมู่ใดเลย</div>`:''}
@@ -1086,15 +1095,17 @@ function viewCodes(){
   return h}
 function bindCodes(){
   const kd=$('#cdKind');if(!kd)return;
-  const keep=()=>{const o=S.codeSel||{};S.codeSel={school:($('#cdSchool')||{}).value||o.school||'',grade:($('#cdGrade')||{}).value||o.grade||'*',village:($('#cdVillage')||{}).value||o.village||'1',kind:$('#cdKind').value,days:+$('#cdDays').value||30}};
+  const keep=()=>{const o=S.codeSel||{};S.codeSel={school:($('#cdSchool')||{}).value||o.school||'',grade:($('#cdGrade')||{}).value||o.grade||'*',village:($('#cdVillage')||{}).value||o.village||'1',kind:$('#cdKind').value,exp:($('#cdExp')||{}).value||o.exp||addDays(30)}};
   kd.onchange=()=>{keep();render()};
   const sc=$('#cdSchool');if(sc)sc.onchange=()=>{keep();S.codeSel.grade='*';render()};
-  ['#cdGrade','#cdVillage','#cdDays'].forEach(i=>{const e=$(i);if(e)e.onchange=()=>{keep();if(i==='#cdVillage')render()}});
+  ['#cdGrade','#cdVillage','#cdExp'].forEach(i=>{const e=$(i);if(e)e.onchange=()=>{keep();if(i==='#cdVillage')render()}});
+  bindExp(()=>keep());
   const mk=$('#cdMake');if(mk)mk.onclick=async()=>{
     keep();const c=S.codeSel;const asm=c.kind==='asm';
     if(asm?!c.village:(!c.school||!c.grade))return;
-    const days=Math.min(180,Math.max(1,c.days|0));mk.disabled=true;
-    const code=genCode();const exp=new Date(Date.now()+days*864e5).toISOString();
+    const exp=expIso(c.exp);if(!exp){toast('วันหมดอายุต้องอยู่ระหว่างพรุ่งนี้ถึงไม่เกิน 1 ปี');return}
+    mk.disabled=true;
+    const code=genCode();
     const title=asm?'อสม. '+vName(c.village):c.school+' '+(c.grade==='*'?'ทุกชั้น':c.grade)+' (ครู)';
     const row=asm?{kind:'asm',village:c.village,school:'',grade:''}:{kind:'teacher',school:c.school,grade:c.grade,village:''};
     const {error}=await sb.from('class_codes').insert({code_hash:await sha256hex(code),label:title,expires_at:exp,...row});
