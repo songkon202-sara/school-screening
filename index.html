@@ -998,26 +998,31 @@ function bindAudit(){
 /* ---------- เจ้าหน้าที่: QR Code (สร้างรหัสทั้งหมด + ใบรหัสพิมพ์ได้ + QR ทางเข้าระบบ) ---------- */
 function viewQr(){
   if(S.codes===null){loadCodes();return '<div class="empty">กำลังโหลด…</div>'}
-  const pl=batchPlan();
+  const pl=batchPlan(S.qrRegen);
   let h=`<div class="stack"><div class="card stack"><h2>QR ทางเข้าระบบ</h2>
   <div class="note">QR นี้เปิดหน้าเข้าสู่ระบบเท่านั้น ไม่มีรหัสอยู่ในนั้น ใช้ติดประกาศหรือส่งทาง LINE ได้</div>
   <div class="pgrid" style="grid-template-columns:minmax(0,260px)"><div class="pcard"><div class="pt">ระบบคัดกรอง 4 กลุ่มโรคและสมาธิสั้น</div><div class="pq">${qrSvg(APPURL())||''}</div><div class="pn">${esc(APPURL())}</div></div></div></div>
   <div class="card stack"><h2>สร้างรหัสทั้งหมดพร้อม QR</h2>
   <div class="note">สร้างรหัสครูให้ทุกโรงเรียน (ทุกชั้น) และรหัส อสม. ครบ 9 หมู่บ้านในครั้งเดียว ได้ใบรหัสพร้อม QR สำหรับพิมพ์หรือบันทึก PDF QR พาเข้าใช้งานโดยอัตโนมัติ รหัสมีอายุ 30 วัน (ถ้าต้องการอายุอื่นหรือสร้างรายเดียว ใช้แท็บรหัสห้อง)</div>
-  <div class="row" style="align-items:center"><button class="btn pri" id="cdAll" ${pl.items.length?'':'disabled'}>⚡ สร้างครบทุกโรงเรียนและ 9 หมู่บ้าน (${pl.items.length} รหัส)</button><span class="note" style="flex:1 1 220px">${pl.items.length?'ต้องกดยืนยันอีกครั้ง':'ทุกโรงเรียนและหมู่บ้านมีรหัสใช้งานอยู่แล้ว'}${pl.skipped.length?' · ข้าม '+pl.skipped.length+' รายการที่มีรหัสใช้งานอยู่แล้ว (อยากได้ใบใหม่ ให้ปิดหรือลบรหัสเดิมในแท็บรหัสห้องก่อน)':''}</span></div></div>`;
+  <label style="display:flex;gap:10px;align-items:flex-start"><input type="checkbox" id="qrRegen" ${S.qrRegen?'checked':''} style="width:22px;height:22px;margin-top:2px"><span>สร้างใหม่ให้ทุกโรงเรียนและหมู่บ้าน แม้มีรหัสอยู่แล้ว <span class="note">(ระบบจะปิดรหัสเดิมให้อัตโนมัติ รหัสเก่าที่แจกไปแล้วจะใช้ไม่ได้)</span></span></label>
+  <div class="row" style="align-items:center"><button class="btn pri" id="cdAll" ${pl.items.length?'':'disabled'}>⚡ สร้างครบทุกโรงเรียนและ 9 หมู่บ้าน (${pl.items.length} รหัส)</button><span class="note" style="flex:1 1 220px">${pl.items.length?'ต้องกดยืนยันอีกครั้ง':'ทุกโรงเรียนและหมู่บ้านมีรหัสใช้งานอยู่แล้ว'}${pl.skipped.length?' · ข้าม '+pl.skipped.length+' รายการที่มีรหัสใช้งานอยู่แล้ว (ติ๊กช่องด้านบนถ้าต้องการสร้างใหม่ทับ)':''}</span></div></div>`;
   if(S.newBatch){h+=`<div class="card stack" id="batchCard"><div class="row noprint" style="justify-content:space-between;align-items:center"><h2>รหัสที่สร้างใหม่ ${S.newBatch.length} รหัส</h2><div class="row"><button class="btn pri" id="bhPrint">🖨️ พิมพ์ / บันทึกเป็น PDF</button><button class="btn" id="bhDone">เสร็จแล้ว ซ่อนรหัสทั้งหมด</button></div></div>
   <div class="note noprint">รหัสแสดงครั้งเดียว ระบบเก็บเฉพาะค่าแฮช ให้พิมพ์หรือบันทึก PDF เก็บไว้ทันที และแจกเฉพาะผู้ที่เกี่ยวข้อง (ครูแต่ละโรงเรียน, อสม. แต่ละหมู่บ้าน) QR พาเข้าใช้งานโดยอัตโนมัติ</div>
   <div class="pgrid">${S.newBatch.map(pcard).join('')}</div></div>`}
   return h+'</div>'}
 function bindQr(){
+  const rg=$('#qrRegen');if(rg)rg.onchange=()=>{S.qrRegen=rg.checked;allArm=false;render()};
   const ca=$('#cdAll');if(ca)ca.onclick=async()=>{
-    const pl=batchPlan();if(!pl.items.length)return;
+    const pl=batchPlan(S.qrRegen);if(!pl.items.length)return;
     if(!allArm){allArm=true;ca.textContent='สร้าง '+pl.items.length+' รหัส? กดอีกครั้งเพื่อยืนยัน';setTimeout(()=>{if(allArm){allArm=false;if(S.tab==='qr')render()}},4000);return}
     allArm=false;ca.disabled=true;
     const days=Math.min(180,Math.max(1,30));const exp=new Date(Date.now()+days*864e5).toISOString();
     const made=[];for(const it of pl.items){const code=genCode();made.push({it,code,hash:await sha256hex(code)})}
     const {error}=await sb.from('class_codes').insert(made.map(m=>({code_hash:m.hash,label:m.it.title,expires_at:exp,kind:m.it.kind,school:m.it.school,grade:m.it.grade,village:m.it.village})));
     if(error){ca.disabled=false;toast('สร้างรหัสไม่ได้: '+(error.message||''));return}
+    let off=0;for(const m of made)for(const id of (m.it.old||[])){const r=await sb.from('class_codes').update({active:false}).eq('id',id);if(r.error)off++}
+    if(off)toast('สร้างแล้ว แต่ปิดรหัสเดิมไม่ได้ '+off+' รหัส กรุณาปิดในแท็บรหัสห้อง');
+    S.qrRegen=false;
     S.newBatch=made.map(m=>({code:m.code,title:m.it.title,exp,link:APPURL()+'#c='+m.code}));
     toast('สร้าง '+made.length+' รหัสแล้ว');await loadCodes();render();window.scrollTo(0,0)};
   const bp=$('#bhPrint');if(bp)bp.onclick=()=>{document.body.classList.add('pb');const off=()=>{document.body.classList.remove('pb');window.removeEventListener('afterprint',off)};window.addEventListener('afterprint',off);try{window.print()}catch(e){off();toast('พิมพ์ไม่ได้ ลองกด Ctrl/Cmd+P')}};
@@ -1027,18 +1032,18 @@ function bindQr(){
 const CODE_ALPHA='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // 32 ตัว ไม่มี I O 0 1 สับสนง่าย
 function genCode(){const b=new Uint8Array(10);crypto.getRandomValues(b);return Array.from(b,x=>CODE_ALPHA[x%32]).join('')}
 async function sha256hex(t){const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return Array.from(new Uint8Array(d),x=>x.toString(16).padStart(2,'0')).join('')}
-S.codes=null;S.newCode=null;S.newBatch=null;
+S.codes=null;S.newCode=null;S.newBatch=null;S.qrRegen=false;
 function qrSvg(t){try{if(!window.qrcode)return '';const q=qrcode(0,'M');q.addData(t);q.make();return q.createSvgTag(4,2)}catch(e){return ''}}
 const APPURL=()=>location.origin+location.pathname;
 function pcard(n){return `<div class="pcard"><div class="pt">${esc(n.title)}</div><div class="pq">${qrSvg(n.link)||'<div class="note">สร้าง QR ไม่ได้ (ไม่มีอินเทอร์เน็ต)</div>'}</div><div class="pc">${esc(n.code)}</div><div class="pn">สแกน QR หรือพิมพ์รหัสที่<br>${esc(APPURL())}<br>หมดอายุ ${new Date(n.exp).toLocaleDateString('th-TH')}</div></div>`}
-function batchPlan(){
+function batchPlan(regen){
   const all=Object.keys(S.students).map(i=>S.students[i]);
   const schools=[...new Set(all.map(x=>x.school).filter(Boolean))].sort(natSort);
   const now=Date.now(),live=c=>c.active&&new Date(c.expires_at).getTime()>now;
   const cs=(S.codes||[]).filter(live);
   const items=[],skipped=[];
-  schools.forEach(sc=>{const t={kind:'teacher',school:sc,grade:'*',village:'',title:sc+' ทุกชั้น (ครู)'};(cs.some(c=>c.kind==='teacher'&&c.school===sc&&c.grade==='*')?skipped:items).push(t)});
-  Object.keys(VILLAGES).forEach(v=>{const t={kind:'asm',school:'',grade:'',village:v,title:'อสม. '+vName(v)};(cs.some(c=>c.kind==='asm'&&c.village===v)?skipped:items).push(t)});
+  schools.forEach(sc=>{const t={kind:'teacher',school:sc,grade:'*',village:'',title:sc+' ทุกชั้น (ครู)'};t.old=cs.filter(c=>c.kind==='teacher'&&c.school===sc&&c.grade==='*').map(c=>c.id);((t.old.length&&!regen)?skipped:items).push(t)});
+  Object.keys(VILLAGES).forEach(v=>{const t={kind:'asm',school:'',grade:'',village:v,title:'อสม. '+vName(v)};t.old=cs.filter(c=>c.kind==='asm'&&c.village===v).map(c=>c.id);((t.old.length&&!regen)?skipped:items).push(t)});
   return {items,skipped,nSchool:schools.length}}
 let allArm=false;
 async function loadCodes(){
