@@ -176,7 +176,10 @@ const TABS={
  officer:[['summary','สรุปผลการดำเนินการ'],['students','นักเรียนและการติดตาม'],['codes','รหัสห้อง']],
  teacher:[['obs','แบบสังเกต 4 โรค'],['snapT','SNAP-IV (ครู)'],['summary','สรุปผล']],
  parent:[['obsP','แบบสังเกต 4 โรค'],['snapP','SNAP-IV (ไม่บังคับ)'],['summary','สรุปผล']]};
-const tabsOf=()=>TABS[S.role].filter(t=>!(codeCtx&&codeCtx.kind==='parent'&&t[0]==='summary'));
+const tabsOf=()=>TABS[S.role].filter(t=>!(codeCtx&&codeCtx.kind!=='teacher'&&t[0]==='summary'));
+const VILLAGES={1:'บ้านสองคอน',2:'บ้านดอนชาด',3:'บ้านโปร่งเจริญ',4:'บ้านสร้างกุง',5:'บ้านนาพะเนียงออ',6:'บ้านปากกะหลาง',7:'บ้านกะเตียด',8:'บ้านจอมปลวกสูง',9:'บ้านป่าข่าชุมชน'};
+const vName=v=>VILLAGES[v]?'หมู่ '+v+' '+VILLAGES[v]:'';
+const villageOpts=sel=>'<option value="">ยังไม่ระบุ</option>'+Object.keys(VILLAGES).map(k=>`<option value="${k}" ${String(sel||'')===k?'selected':''}>${esc(vName(k))}</option>`).join('');
 const isObsTab=t=>t==='obs'||t==='obsP';
 
 /* ---------- ข้อมูลที่คำนวณต่อคน ---------- */
@@ -324,23 +327,24 @@ function studentForm(){const all=Object.keys(S.students);const dls=[...new Set(a
   <label class="f" style="flex-basis:90px;flex-grow:0">อายุ (ปี)<input type="number" id="nAge" min="3" max="19"></label>
   <label class="f" style="flex-basis:130px">ชั้น<input type="text" id="nGrade" placeholder="เช่น ป.3/1" list="dlGrade"></label>
   <label class="f" style="flex-basis:200px">โรงเรียน<input type="text" id="nSchool" list="dlSchool"></label>
+  <label class="f" style="flex-basis:190px">หมู่บ้าน<select id="nVillage">${villageOpts('')}</select></label>
   <button class="btn pri" id="addStu" ${S.canWrite===false?'disabled':''}>เพิ่มรายชื่อ</button></div>
   ${S.canWrite===false?'<div class="note">บัญชีนี้ดูข้อมูลได้อย่างเดียว ไม่มีสิทธิ์บันทึก</div>':''}</div>${importBox()}`}
 function importBox(){
   const im=S.imp;
   let h=`<div class="card stack" id="impBox"><h2>แนบไฟล์รายชื่อนักเรียน</h2>
-  <div class="note">รองรับไฟล์ .csv (UTF-8) และ .xlsx แถวแรกเป็นหัวตาราง ใช้คอลัมน์ ชื่อ-นามสกุล, เลขบัตรประชาชน (ไม่บังคับ ระบบไม่เก็บและไม่แสดง 5 หลักกลาง), อายุ, ชั้น, โรงเรียน (หรือแยกเป็น คำนำหน้า / ชื่อ / นามสกุล ก็ได้) ระบบจะแสดงตัวอย่างให้ตรวจก่อนนำเข้า และข้ามชื่อที่ซ้ำกับที่มีอยู่</div>
+  <div class="note">รองรับไฟล์ .csv (UTF-8) และ .xlsx แถวแรกเป็นหัวตาราง ใช้คอลัมน์ ชื่อ-นามสกุล, เลขบัตรประชาชน (ไม่บังคับ ระบบไม่เก็บและไม่แสดง 5 หลักกลาง), อายุ, ชั้น, โรงเรียน, หมู่บ้าน (ใส่เลขหมู่ 1-9 ไม่บังคับ ใช้กับรหัส อสม.) (หรือแยกเป็น คำนำหน้า / ชื่อ / นามสกุล ก็ได้) ระบบจะแสดงตัวอย่างให้ตรวจก่อนนำเข้า ข้ามชื่อที่ซ้ำกับที่มีอยู่ แต่ถ้าชื่อซ้ำและไฟล์ระบุหมู่บ้านมา ระบบจะเติมหมู่บ้านให้เด็กคนนั้น</div>
   <div class="row"><label class="f" style="flex-basis:280px">เลือกไฟล์<input type="file" id="impFile" accept=".csv,.xlsx,.xls,text/csv"></label>
   <button class="btn" id="impTpl">ดาวน์โหลดไฟล์แม่แบบ (.csv)</button></div>`;
   if(im){
     if(im.err)h+=`<div class="res bad"><b>${esc(im.err)}</b></div>`;
     else{
-      const ok=im.rows.filter(r=>!r.dup),dup=im.rows.length-ok.length;
-      h+=`<div class="res ${ok.length?'ok':'warn'}"><b>ไฟล์ ${esc(im.file)}: พบ ${im.rows.length} แถว นำเข้าได้ ${ok.length} คน${dup?' · ซ้ำ/ว่าง ข้าม '+dup+' แถว':''}</b></div>
-      <div class="tblw" style="max-height:280px;overflow-y:auto"><table><thead><tr><th>ชื่อ-นามสกุล</th><th>เลขบัตร (ปกปิด)</th><th>อายุ</th><th>ชั้น</th><th>โรงเรียน</th><th></th></tr></thead><tbody>
-      ${im.rows.slice(0,200).map(r=>`<tr><td>${esc(r.name)}</td><td>${esc(r.cidMask||'-')}${r.cidBad?' <span class="pill p-warn">เลขไม่ถูกต้อง ไม่เก็บ</span>':''}</td><td>${esc(r.age)}</td><td>${esc(r.grade)}</td><td>${esc(r.school)}</td><td>${r.dup?'<span class="pill p-mute">'+esc(r.dup)+'</span>':'<span class="pill p-ok">นำเข้า</span>'}</td></tr>`).join('')}
+      const ok=im.rows.filter(r=>!r.dup),dup=im.rows.length-ok.length,fill=ok.filter(r=>r.fillId).length;
+      h+=`<div class="res ${ok.length?'ok':'warn'}"><b>ไฟล์ ${esc(im.file)}: พบ ${im.rows.length} แถว นำเข้าได้ ${ok.length-fill} คน${fill?' · เติมหมู่บ้าน '+fill+' คน':''}${dup?' · ซ้ำ/ว่าง ข้าม '+dup+' แถว':''}</b></div>
+      <div class="tblw" style="max-height:280px;overflow-y:auto"><table><thead><tr><th>ชื่อ-นามสกุล</th><th>เลขบัตร (ปกปิด)</th><th>อายุ</th><th>ชั้น</th><th>โรงเรียน</th><th>หมู่บ้าน</th><th></th></tr></thead><tbody>
+      ${im.rows.slice(0,200).map(r=>`<tr><td>${esc(r.name)}</td><td>${esc(r.cidMask||'-')}${r.cidBad?' <span class="pill p-warn">เลขไม่ถูกต้อง ไม่เก็บ</span>':''}</td><td>${esc(r.age)}</td><td>${esc(r.grade)}</td><td>${esc(r.school)}</td><td>${esc(r.village?vName(r.village):'')}</td><td>${r.dup?'<span class="pill p-mute">'+esc(r.dup)+'</span>':r.fillId?'<span class="pill p-info">เติมหมู่บ้าน</span>':'<span class="pill p-ok">นำเข้า</span>'}</td></tr>`).join('')}
       </tbody></table></div>${im.rows.length>200?'<div class="note">แสดง 200 แถวแรก</div>':''}
-      <div class="row"><button class="btn pri" id="impGo" ${(!ok.length||S.canWrite===false)?'disabled':''}>นำเข้า ${ok.length} คน</button><button class="btn" id="impCancel">ยกเลิก</button></div>`;
+      <div class="row"><button class="btn pri" id="impGo" ${(!ok.length||S.canWrite===false)?'disabled':''}>${fill?'นำเข้า/อัปเดต':'นำเข้า'} ${ok.length} คน</button><button class="btn" id="impCancel">ยกเลิก</button></div>`;
     }
   }
   return h+'</div>';
@@ -356,6 +360,17 @@ function parseCsv(t){
   if(f!==''||row.length){row.push(f);rows.push(row)}
   return rows;
 }
+function normVillage(v){
+  v=String(v||'').trim();if(!v)return '';
+  const nums=v.match(/[0-9๐-๙]+/g);
+  if(nums){
+    if(nums.length!==1||nums[0].length!==1)return '';
+    const d=/[๐-๙]/.test(nums[0])?String('๐๑๒๓๔๕๖๗๘๙'.indexOf(nums[0])):nums[0];
+    return VILLAGES[d]?d:'';
+  }
+  const k=Object.keys(VILLAGES).find(k=>v.replace(/\s/g,'').includes(VILLAGES[k].replace(/^บ้าน/,'')));
+  return k||'';
+}
 function rowsToStudents(grid){
   grid=grid.map(r=>r.map(c=>String(c??'').trim())).filter(r=>r.some(c=>c));
   if(!grid.length)return [];
@@ -366,13 +381,13 @@ function rowsToStudents(grid){
     const find=re=>H.findIndex(c=>re.test(c));
     col.full=find(/ชื่อ.*สกุล/);col.pre=find(/คำนำหน้า|^คำนำ/);col.last=H.findIndex(c=>/สกุล/.test(c)&&!/ชื่อ.*สกุล/.test(c));
     col.first=H.findIndex((c,i)=>/^ชื่อ/.test(c)&&i!==col.full);
-    col.cid=find(/บัตร|ประชาชน|ปชช/);col.age=find(/อายุ/);col.grade=find(/ชั้น/);col.school=find(/โรงเรียน|สถานศึกษา/);
-  }else{col={full:0,pre:-1,last:-1,first:-1,cid:-1,age:1,grade:2,school:3}}
+    col.cid=find(/บัตร|ประชาชน|ปชช/);col.age=find(/อายุ/);col.grade=find(/ชั้น/);col.school=find(/โรงเรียน|สถานศึกษา/);col.village=find(/หมู่/);
+  }else{col={full:0,pre:-1,last:-1,first:-1,cid:-1,age:1,grade:2,school:3,village:-1}}
   const g=(r,i)=>i>=0?(r[i]||''):'';
   return grid.slice(start).map(r=>{
     let name=col.full>=0?g(r,col.full):[g(r,col.pre),g(r,col.first),g(r,col.last)].filter(Boolean).join(' ');
     if(col.full>=0&&col.pre>=0&&g(r,col.pre))name=g(r,col.pre)+name;
-    return {name:name.trim(),cid:g(r,col.cid),age:g(r,col.age).replace(/[^0-9]/g,''),grade:g(r,col.grade),school:g(r,col.school)};
+    return {name:name.trim(),cid:g(r,col.cid),age:g(r,col.age).replace(/[^0-9]/g,''),grade:g(r,col.grade),school:g(r,col.school),village:normVillage(g(r,col.village))};
   });
 }
 async function readRosterFile(file){
@@ -392,13 +407,13 @@ function bindImport(){
     const file=f.files[0];if(!file)return;
     try{
       const rows=await readRosterFile(file);
-      const seen=new Set(Object.values(S.students).map(x=>[x.name,x.school||'',x.grade||'',x.cid||''].join('|')));
+      const seen=new Set(),existing={};Object.keys(S.students).forEach(id=>{const x=S.students[id],k=[x.name,x.school||'',x.grade||'',x.cid||''].join('|');seen.add(k);existing[k]=id});
       rows.forEach(r=>{
         const d=String(r.cid||'').replace(/\D/g,'');delete r.cid;r.cidMask='';
         if(d){const m=maskId(d);if(m)r.cidMask=m;else r.cidBad=true}
         if(!r.name){r.dup='ไม่มีชื่อ';return}
         const k=[r.name,r.school,r.grade,r.cidMask].join('|');
-        if(seen.has(k))r.dup='ซ้ำ';else seen.add(k);
+        if(seen.has(k)){const eid=existing[k];if(eid&&r.village&&S.students[eid].village!==r.village&&!r._used){r.fillId=eid;existing[k]=null}else r.dup='ซ้ำ'}else seen.add(k);
       });
       S.imp=rows.length?{file:file.name,rows}:{file:file.name,rows:[],err:'ไม่พบรายชื่อในไฟล์นี้ ตรวจว่าแถวแรกเป็นหัวตารางและมีคอลัมน์ชื่อ'};
     }catch(e){S.imp={file:file.name,rows:[],err:e.message||'อ่านไฟล์ไม่ได้'}}
@@ -406,7 +421,7 @@ function bindImport(){
   };
   const t=$('#impTpl');if(t)t.onclick=async()=>{
     if(!dl){toast('เบราว์เซอร์นี้ส่งออกไฟล์ไม่ได้');return}
-    try{await dl.save({filename:'แม่แบบรายชื่อนักเรียน.csv',data:'\ufeff'+'ชื่อ-นามสกุล,เลขบัตรประชาชน,อายุ,ชั้น,โรงเรียน\r\n'});toast('บันทึกไฟล์แม่แบบแล้ว')}catch(e){if(e.code!=='declined')toast('ส่งออกไม่ได้')}
+    try{await dl.save({filename:'แม่แบบรายชื่อนักเรียน.csv',data:'\ufeff'+'ชื่อ-นามสกุล,เลขบัตรประชาชน,อายุ,ชั้น,โรงเรียน,หมู่บ้าน\r\n'});toast('บันทึกไฟล์แม่แบบแล้ว')}catch(e){if(e.code!=='declined')toast('ส่งออกไม่ได้')}
   };
   const c=$('#impCancel');if(c)c.onclick=()=>{S.imp=null;render()};
   const go=$('#impGo');if(go)go.onclick=importRows;
@@ -416,7 +431,9 @@ async function importRows(){
   let n=0;
   try{
     for(let i=0;i<rows.length;i+=20){
-      await Promise.all(rows.slice(i,i+20).map(r=>db.collection('students').add({name:r.name,cid:r.cidMask||'',age:r.age,grade:r.grade,school:r.school,createdAt:Date.now()})));
+      await Promise.all(rows.slice(i,i+20).map(async r=>{
+        if(r.fillId){const {error}=await sb.from('students').update({village:r.village}).eq('id',r.fillId);if(error)throw dbError(error);return}
+        return db.collection('students').add({name:r.name,cid:r.cidMask||'',age:r.age,grade:r.grade,school:r.school,village:r.village||'',createdAt:Date.now()})}));
       n=Math.min(i+20,rows.length);
     }
     S.imp=null;toast('นำเข้ารายชื่อแล้ว '+rows.length+' คน');render();
@@ -428,8 +445,8 @@ function viewStudents(){
   if(S.open&&S.students[S.open])h+=detail(S.open);
   h+=`<div class="card stack"><h2>รายชื่อนักเรียน (${ids.length})</h2>`;
   if(!ids.length)h+='<div class="empty">ยังไม่มีรายชื่อ เพิ่มนักเรียนคนแรกด้านบนได้เลย</div>';
-  else h+=`<div class="tblw"><table><thead><tr><th>ชื่อ</th><th>เลขบัตร (ปกปิด)</th><th>อายุ</th><th>ชั้น</th><th>โรงเรียน</th><th>สถานะ</th><th></th></tr></thead><tbody>${ids.map(id=>{const s=S.students[id],d=derive(id);
-    return `<tr><td>${esc(s.name)}</td><td class="nw">${esc(s.cid||'-')}</td><td>${esc(s.age||'')}</td><td>${esc(s.grade||'')}</td><td>${esc(s.school||'')}</td><td><span class="pill ${STAGE[d.stage][1]}">${STAGE[d.stage][0]}</span></td>
+  else h+=`<div class="tblw"><table><thead><tr><th>ชื่อ</th><th>เลขบัตร (ปกปิด)</th><th>อายุ</th><th>ชั้น</th><th>โรงเรียน</th><th>หมู่บ้าน</th><th>สถานะ</th><th></th></tr></thead><tbody>${ids.map(id=>{const s=S.students[id],d=derive(id);
+    return `<tr><td>${esc(s.name)}</td><td class="nw">${esc(s.cid||'-')}</td><td>${esc(s.age||'')}</td><td>${esc(s.grade||'')}</td><td>${esc(s.school||'')}</td><td>${s.village?esc(vName(s.village)):'<span class="muted">-</span>'}</td><td><span class="pill ${STAGE[d.stage][1]}">${STAGE[d.stage][0]}</span></td>
     <td><div class="flagrow"><button class="btn sm" data-open="${id}">รายละเอียด</button><button class="btn sm" data-del="${id}" ${S.canWrite===false?'disabled':''}>ลบ</button></div></td></tr>`}).join('')}</tbody></table></div>`;
   return h+'</div></div>';
 }
@@ -444,6 +461,7 @@ function scoreLine(d){
 function detail(id){
   const s=S.students[id],d=derive(id);
   return `<div class="card stack" id="detail"><div class="row" style="justify-content:space-between;align-items:center"><h2>${esc(s.name)} <span class="muted" style="font-size:15px;font-weight:400">${esc(s.grade||'')} ${s.age?'· อายุ '+esc(s.age)+' ปี':''} ${s.cid?'· เลขบัตร '+esc(s.cid):''}</span></h2><button class="btn sm" data-close="1">ปิด</button></div>
+  <div class="row"><label class="f" style="flex-basis:240px;flex-grow:0">หมู่บ้านของเด็ก (ใช้กับรหัส อสม.)<select data-village="${id}" ${S.canWrite===false?'disabled':''}>${villageOpts(s.village)}</select></label></div>
   <div class="stack" style="gap:6px">${scoreLine(d)}</div>
   ${d.flagged.length?`<h3>การดำเนินการต่อภาวะที่พบแนวโน้ม</h3>
   <div class="stack">${d.flagged.map(c=>{const a=d.act[c]||{};
@@ -464,12 +482,16 @@ function bindOfficer(){
   document.querySelectorAll('[data-close]').forEach(x=>x.onclick=()=>{S.open=null;render()});
   document.querySelectorAll('[data-del]').forEach(x=>x.onclick=()=>delStudent(x.dataset.del,x));
   const sa=$('#saveAct');if(sa)sa.onclick=()=>saveAct(sa.dataset.sid);
+  document.querySelectorAll('[data-village]').forEach(sel=>sel.onchange=async()=>{
+    const {error}=await sb.from('students').update({village:sel.value}).eq('id',sel.dataset.village);
+    if(error){toast('บันทึกหมู่บ้านไม่ได้: '+(error.message||''));return}
+    if(S.students[sel.dataset.village])S.students[sel.dataset.village].village=sel.value;toast('บันทึกหมู่บ้านแล้ว')})
 }
 async function addStudent(){
   const name=$('#nName').value.trim();if(!name){toast('กรุณากรอกชื่อ-นามสกุล');return}
   const rawCid=(($('#nCid')||{}).value||'').replace(/\D/g,'');let cid='';
   if(rawCid){cid=maskId(rawCid);if(!cid){toast('เลขบัตรประชาชนไม่ถูกต้อง ต้องมี 13 หลักและผ่านการตรวจสอบ');$('#nCid').focus();return}}
-  try{await db.collection('students').add({name,cid,age:$('#nAge').value||'',grade:$('#nGrade').value.trim(),school:$('#nSchool').value.trim(),createdAt:Date.now()});toast('เพิ่มรายชื่อแล้ว');['#nName','#nCid','#nAge','#nGrade','#nSchool'].forEach(i=>{const e=$(i);if(e)e.value=''})}
+  try{await db.collection('students').add({name,cid,age:$('#nAge').value||'',grade:$('#nGrade').value.trim(),school:$('#nSchool').value.trim(),village:($('#nVillage')||{}).value||'',createdAt:Date.now()});toast('เพิ่มรายชื่อแล้ว');['#nName','#nCid','#nAge','#nGrade','#nSchool','#nVillage'].forEach(i=>{const e=$(i);if(e)e.value=''})}
   catch(e){toast('บันทึกไม่ได้: '+(e.code||'ไม่ทราบสาเหตุ'))}
 }
 let delArm=null;
@@ -505,7 +527,7 @@ function loadDraft(){
   const ex=S.shots[formDocId()];
   const n=isObsTab(S.tab)?40:SNAP_N;
   S.draft=ex?{answers:[...ex.answers],respondent:ex.respondent||'',date:ex.date||new Date().toISOString().slice(0,10),rel:ex.rel||'',avg:ex.avg||'',term:ex.term||''}
-    :{answers:Array(n).fill(null),respondent:(S.me&&S.me.name)||'',date:new Date().toISOString().slice(0,10),rel:(S.tab==='snapP'||S.tab==='obsP')?'ผู้ปกครอง':'',avg:'',term:''};
+    :{answers:Array(n).fill(null),respondent:(S.me&&S.me.name)||'',date:new Date().toISOString().slice(0,10),rel:(S.tab==='snapP'||S.tab==='obsP')?(codeCtx&&codeCtx.kind==='asm'?'อสม.':'ผู้ปกครอง'):'',avg:'',term:''};
 }
 function viewForm(){
   const ids=Object.keys(S.students).sort((a,b)=>S.students[a].name.localeCompare(S.students[b].name,'th'));
@@ -605,7 +627,7 @@ let sb=null,curUid=undefined,subsOff=[];
 function dbError(e){const x=new Error(e.message||'error');x.code=(e.code==='42501'||/row-level security/i.test(e.message||''))?'ไม่มีสิทธิ์ทำรายการนี้':(e.message||e.code||'ไม่ทราบสาเหตุ');return x}
 function makeDb(sb){
   const T={
-    students:{cols:'id,name,cid,age,grade,school,created_at',key:'id',filter:q=>q.is('deleted_at',null),doc:r=>({name:r.name,cid:r.cid||'',age:r.age||'',grade:r.grade||'',school:r.school||''})},
+    students:{cols:'id,name,cid,age,grade,school,village,created_at',key:'id',filter:q=>q.is('deleted_at',null),doc:r=>({name:r.name,cid:r.cid||'',age:r.age||'',grade:r.grade||'',school:r.school||'',village:r.village||''})},
     screenings:{cols:'id,student_id,type,answers,respondent,rel,date,avg,scores,flags,updated_at',key:'id',doc:r=>({studentId:r.student_id,type:r.type,answers:r.answers,respondent:r.respondent||'',rel:r.rel||'',date:r.date||'',avg:r.avg||'',scores:r.scores,flags:r.flags})},
     actions:{cols:'student_id,conds,updated_at',key:'student_id',doc:r=>({conds:r.conds||{}})}};
   async function fetchAll(t){
@@ -631,7 +653,7 @@ function makeDb(sb){
       add:async o=>{
         if(t!=='students')throw dbError({message:'unsupported'});
         const id=crypto.randomUUID();
-        const {error}=await sb.from('students').insert({id,name:o.name,cid:o.cid||'',age:String(o.age||''),grade:o.grade||'',school:o.school||''});
+        const {error}=await sb.from('students').insert({id,name:o.name,cid:o.cid||'',age:String(o.age||''),grade:o.grade||'',school:o.school||'',village:o.village||''});
         if(error)throw dbError(error);return {id}},
       onSnapshot:(cb,e)=>watch(t,cb,e)}},
     doc(path){const [t,id]=path.split('/');return {
@@ -651,9 +673,9 @@ dl={save:async({filename,data})=>{
   setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},800);return {status:'saved'}}};
 
 function gateCard(inner){return `<div class="card stack" style="max-width:520px;margin:24px auto">${inner}</div>`}
-function loginGate(){return gateCard(`<h2>เข้าด้วยรหัสห้อง</h2>
-  <div class="note">สำหรับครูและผู้ปกครอง ใส่รหัสห้องที่เจ้าหน้าที่หรือครูแจกให้ ไม่ต้องสมัครสมาชิกและไม่ต้องใช้อีเมล</div>
-  <label class="f" style="flex:none">รหัสห้อง<input type="text" id="cdIn" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="16" placeholder="เช่น K7M2Q9XB4P" style="letter-spacing:2px;text-transform:uppercase"></label>
+function loginGate(){return gateCard(`<h2>เข้าด้วยรหัส (ครู / อสม.)</h2>
+  <div class="note">สำหรับครูและ อสม. ใส่รหัสที่เจ้าหน้าที่แจกให้ ไม่ต้องสมัครสมาชิกและไม่ต้องใช้อีเมล</div>
+  <label class="f" style="flex:none">รหัส<input type="text" id="cdIn" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="16" placeholder="เช่น K7M2Q9XB4P" style="letter-spacing:2px;text-transform:uppercase"></label>
   <div><button class="btn pri" id="cdGo">เข้าใช้งาน</button></div><div id="cdMsg" class="note" role="status">${esc(S.codeNote||'')}</div>
   <hr style="border:0;border-top:1px solid var(--line,#444);width:100%">
   <h2>เข้าสู่ระบบด้วยอีเมล</h2>
@@ -675,7 +697,7 @@ function bindGate(){
   const cg=$('#cdGo');
   if(cg){const cdSend=async()=>{
     const code=$('#cdIn').value.trim(),m=$('#cdMsg');
-    if(code.length<6){m.textContent='กรุณาใส่รหัสห้อง';return}
+    if(code.length<6){m.textContent='กรุณาใส่รหัส';return}
     cg.disabled=true;m.textContent='กำลังตรวจรหัส…';
     const r=await enterCode(code);
     cg.disabled=false;if(r)m.textContent=r};
@@ -743,7 +765,7 @@ function makeDbCode(){
   const loaders=new Set();let inflight=null,at=0;
   const fetchCode=()=>{const now=Date.now();if(inflight&&now-at<2500)return inflight;at=now;inflight=codeCall('code_load',{p_code:codeCtx.code});return inflight};
   const MAP={
-    students:{rows:d=>d.students,doc:r=>({name:r.name,cid:'',age:r.age||'',grade:r.grade||'',school:r.school||''})},
+    students:{rows:d=>d.students,doc:r=>({name:r.name,cid:'',age:r.age||'',grade:r.grade||'',school:r.school||'',village:r.village||''})},
     screenings:{rows:d=>d.screenings,doc:r=>({studentId:r.student_id,type:r.type,answers:r.answers,respondent:r.respondent||'',rel:r.rel||'',date:r.date||'',avg:r.avg||'',scores:r.scores,flags:r.flags})},
     actions:{rows:()=>[],doc:()=>({conds:{}})}};
   function watch(t,cb,errcb){
@@ -767,12 +789,12 @@ async function enterCode(code,quiet){
   const {data,error}=await sb.rpc('code_load',{p_code:code});
   if(error){return 'เชื่อมต่อไม่สำเร็จ กรุณาลองใหม่'}
   if(!data||data.ok===false){sessSet('sk_code','');return CODE_ERR[data&&data.error]||'ไม่ทราบสาเหตุ'}
-  stopSubs();codeCtx={code,kind:data.kind,school:data.school,grade:data.grade};curUid='code';
+  stopSubs();codeCtx={code,kind:data.kind,school:data.school,grade:data.grade,village:data.village||''};curUid='code';
   sessSet('sk_code',code);
   S.students={};S.shots={};S.actions={};S.sid='';S.draft=null;S.open=null;S.imp=null;S.gate=null;S.codeNote='';S.ready=false;
-  S.me={name:'',label:(data.kind==='teacher'?'ครูประจำชั้น':'ผู้ปกครอง')+' · '+data.school+' '+data.grade,dbRole:'code'};
+  S.me={name:'',label:data.kind==='asm'?'อสม. · '+vName(data.village):(data.kind==='teacher'?'ครูประจำชั้น':'ผู้ปกครอง')+' · '+data.school+' '+(data.grade==='*'?'(ทุกชั้น)':data.grade),dbRole:'code'};
   S.role=data.kind==='teacher'?'teacher':'parent';S.tab=tabsOf()[0][0];S.canWrite=true;
-  S.school=data.school;S.grade=data.grade;
+  S.school=data.school;S.grade=data.grade==='*'?'':data.grade;
   db=makeDbCode();
   let first=0;const hit=()=>{if(++first>=3)S.ready=true;refresh()};
   const err=e=>{if(e&&e.fatal){exitCode(e.code);return}toast('เชื่อมต่อฐานข้อมูลไม่สำเร็จ กำลังลองใหม่')};
@@ -798,41 +820,51 @@ function viewCodes(){
   if(S.codes===null){loadCodes();return '<div class="empty">กำลังโหลด…</div>'}
   const all=Object.keys(S.students).map(i=>S.students[i]);
   const schools=[...new Set(all.map(x=>x.school).filter(Boolean))].sort(natSort);
-  const sel=S.codeSel||{school:schools[0]||'',grade:'',kind:'teacher',days:30};
+  const sel=S.codeSel||{school:schools[0]||'',grade:'*',kind:'teacher',days:30,village:'1'};
   const grades=[...new Set(all.filter(x=>x.school===sel.school).map(x=>x.grade).filter(Boolean))].sort(natSort);
-  if(!grades.includes(sel.grade))sel.grade=grades[0]||'';S.codeSel=sel;
-  const now=Date.now();
-  let h=`<div class="stack"><div class="card stack"><h2>สร้างรหัสห้อง</h2>
-  <div class="note">รหัสให้ครูหรือผู้ปกครองเข้าดูรายชื่อเด็กในห้องนั้นและกรอกแบบประเมินได้โดยไม่ต้องสมัครสมาชิก รหัสครูเห็นผลของเด็กในห้อง รหัสผู้ปกครองเห็นเฉพาะรายชื่อ ระบบเก็บเฉพาะค่าแฮชของรหัส จึง<b>เห็นรหัสได้ครั้งเดียวตอนสร้าง</b> ต้องคัดลอกส่งทันที ถ้าหายให้ปิดรหัสเก่าแล้วสร้างใหม่</div>
-  <div class="row"><label class="f" style="flex-basis:220px">โรงเรียน<select id="cdSchool">${schools.map(x=>`<option ${sel.school===x?'selected':''}>${esc(x)}</option>`).join('')}</select></label>
-  <label class="f" style="flex-basis:120px">ชั้น<select id="cdGrade">${grades.map(x=>`<option ${sel.grade===x?'selected':''}>${esc(x)}</option>`).join('')}</select></label>
-  <label class="f" style="flex-basis:150px">สำหรับ<select id="cdKind"><option value="teacher" ${sel.kind==='teacher'?'selected':''}>ครูประจำชั้น</option><option value="parent" ${sel.kind==='parent'?'selected':''}>ผู้ปกครอง</option></select></label>
+  if(sel.grade!=='*'&&!grades.includes(sel.grade))sel.grade='*';S.codeSel=sel;
+  const now=Date.now(),asm=sel.kind==='asm';
+  const vCount={};all.forEach(x=>{if(x.village)vCount[x.village]=(vCount[x.village]||0)+1});
+  const noVillage=all.filter(x=>!x.village).length;
+  let h=`<div class="stack"><div class="card stack"><h2>สร้างรหัสเข้าใช้งาน</h2>
+  <div class="note">รหัสให้ครูหรือ อสม. เข้ากรอกแบบประเมินได้โดยไม่ต้องสมัครสมาชิก <b>รหัสครู</b> (ต่อโรงเรียนหรือชั้น) เห็นรายชื่อและผลของเด็กในขอบเขตนั้น <b>รหัส อสม.</b> (ต่อหมู่บ้าน) เห็นเฉพาะรายชื่อเด็กในหมู่บ้านนั้น ไม่เห็นคำตอบของใคร ระบบเก็บเฉพาะค่าแฮชของรหัส จึง<b>เห็นรหัสได้ครั้งเดียวตอนสร้าง</b> ต้องคัดลอกส่งทันที ถ้าหายให้ปิดรหัสเก่าแล้วสร้างใหม่</div>
+  <div class="row"><label class="f" style="flex-basis:190px">สำหรับ<select id="cdKind"><option value="teacher" ${!asm?'selected':''}>ครูประจำชั้น (ต่อโรงเรียน/ชั้น)</option><option value="asm" ${asm?'selected':''}>อสม. (ต่อหมู่บ้าน)</option></select></label>
+  ${asm?`<label class="f" style="flex-basis:240px">หมู่บ้าน<select id="cdVillage">${Object.keys(VILLAGES).map(k=>`<option value="${k}" ${sel.village===k?'selected':''}>${esc(vName(k))} (${vCount[k]||0} คน)</option>`).join('')}</select></label>`
+  :`<label class="f" style="flex-basis:220px">โรงเรียน<select id="cdSchool">${schools.map(x=>`<option ${sel.school===x?'selected':''}>${esc(x)}</option>`).join('')}</select></label>
+  <label class="f" style="flex-basis:190px">ชั้น<select id="cdGrade"><option value="*" ${sel.grade==='*'?'selected':''}>ทุกชั้น (ทั้งโรงเรียน)</option>${grades.map(x=>`<option ${sel.grade===x?'selected':''}>${esc(x)}</option>`).join('')}</select></label>`}
   <label class="f" style="flex-basis:110px;flex-grow:0">อายุรหัส (วัน)<input type="number" id="cdDays" min="1" max="180" value="${sel.days}"></label>
-  <button class="btn pri" id="cdMake" ${grades.length?'':'disabled'}>สร้างรหัส</button></div>
+  <button class="btn pri" id="cdMake" ${(asm?!all.length:!schools.length)?'disabled':''}>สร้างรหัส</button></div>
+  ${asm&&!(vCount[sel.village]>0)?'<div class="note">หมู่บ้านนี้ยังไม่มีเด็กที่ระบุหมู่ รหัสนี้จะเห็นรายชื่อว่างจนกว่าจะกำหนดหมู่บ้านให้เด็ก (นำเข้าไฟล์ที่มีคอลัมน์ "หมู่บ้าน" หรือเลือกในหน้ารายละเอียดนักเรียน)</div>':''}
+  ${noVillage?`<div class="note">เด็ก ${noVillage} คนจาก ${all.length} คน ยังไม่ระบุหมู่บ้าน จะไม่ปรากฏในรหัส อสม. ของหมู่ใดเลย</div>`:''}
   ${schools.length?'':'<div class="note">ยังไม่มีรายชื่อนักเรียน กรุณานำเข้ารายชื่อก่อน</div>'}</div>`;
-  if(S.newCode){const n=S.newCode;h+=`<div class="card stack" style="border-color:var(--ok,#6cc4b8)"><h2>รหัสใหม่ ${esc(n.school)} ${esc(n.grade)} (${n.kind==='teacher'?'ครู':'ผู้ปกครอง'})</h2>
+  if(S.newCode){const n=S.newCode;h+=`<div class="card stack" style="border-color:var(--ok,#6cc4b8)"><h2>รหัสใหม่ ${esc(n.title)}</h2>
   <div style="font-size:28px;letter-spacing:4px;font-weight:700" id="ncCode">${esc(n.code)}</div>
   <div class="note">ลิงก์เข้าตรง (ใส่รหัสให้อัตโนมัติ): <span id="ncLink">${esc(n.link)}</span></div>
   <div class="row"><button class="btn pri" id="ncCopyCode">คัดลอกรหัส</button><button class="btn" id="ncCopyLink">คัดลอกลิงก์</button><button class="btn" id="ncDone">เสร็จแล้ว ซ่อนรหัส</button></div>
   <div class="note">รหัสนี้จะไม่แสดงอีกหลังซ่อน หมดอายุ ${new Date(n.exp).toLocaleDateString('th-TH')}</div></div>`}
-  h+=`<div class="card stack"><h2>รหัสที่สร้างไว้</h2><div class="tblw"><table><thead><tr><th>โรงเรียน</th><th>ชั้น</th><th>สำหรับ</th><th>หมดอายุ</th><th>ใช้ล่าสุด</th><th>สถานะ</th><th></th></tr></thead><tbody>
-  ${(S.codes||[]).map(c=>{const exp=new Date(c.expires_at).getTime()<now;const st=!c.active?['ปิดแล้ว','p-mute']:exp?['หมดอายุ','p-mute']:['ใช้งานได้','p-ok'];
-   return `<tr><td>${esc(c.school)}</td><td>${esc(c.grade)}</td><td>${c.kind==='teacher'?'ครู':'ผู้ปกครอง'}</td><td class="nw">${new Date(c.expires_at).toLocaleDateString('th-TH')}</td><td class="nw">${c.last_used_at?new Date(c.last_used_at).toLocaleString('th-TH',{dateStyle:'short',timeStyle:'short'}):'-'}</td>
+  const scopeOf=c=>c.kind==='asm'?[vName(c.village),'-']:[c.school,c.grade==='*'?'ทุกชั้น':c.grade];
+  h+=`<div class="card stack"><h2>รหัสที่สร้างไว้</h2><div class="tblw"><table><thead><tr><th>โรงเรียน / หมู่บ้าน</th><th>ชั้น</th><th>สำหรับ</th><th>หมดอายุ</th><th>ใช้ล่าสุด</th><th>สถานะ</th><th></th></tr></thead><tbody>
+  ${(S.codes||[]).map(c=>{const exp=new Date(c.expires_at).getTime()<now;const st=!c.active?['ปิดแล้ว','p-mute']:exp?['หมดอายุ','p-mute']:['ใช้งานได้','p-ok'];const sc=scopeOf(c);
+   return `<tr><td>${esc(sc[0])}</td><td>${esc(sc[1])}</td><td>${c.kind==='teacher'?'ครู':c.kind==='asm'?'อสม.':'ผู้ปกครอง'}</td><td class="nw">${new Date(c.expires_at).toLocaleDateString('th-TH')}</td><td class="nw">${c.last_used_at?new Date(c.last_used_at).toLocaleString('th-TH',{dateStyle:'short',timeStyle:'short'}):'-'}</td>
    <td><span class="pill ${st[1]}">${st[0]}</span></td><td><button class="btn sm" data-cdtoggle="${c.id}" data-on="${c.active?1:0}">${c.active?'ปิดรหัส':'เปิดรหัส'}</button></td></tr>`}).join('')||'<tr><td colspan="7" class="muted">ยังไม่มีรหัส</td></tr>'}
   </tbody></table></div></div></div>`;
   return h}
 function bindCodes(){
-  const sc=$('#cdSchool');if(!sc)return;
-  const keep=()=>{S.codeSel={school:$('#cdSchool').value,grade:($('#cdGrade')||{}).value||'',kind:$('#cdKind').value,days:+$('#cdDays').value||30}};
-  sc.onchange=()=>{keep();S.codeSel.grade='';render()};
-  ['#cdGrade','#cdKind','#cdDays'].forEach(i=>{const e=$(i);if(e)e.onchange=keep});
+  const kd=$('#cdKind');if(!kd)return;
+  const keep=()=>{const o=S.codeSel||{};S.codeSel={school:($('#cdSchool')||{}).value||o.school||'',grade:($('#cdGrade')||{}).value||o.grade||'*',village:($('#cdVillage')||{}).value||o.village||'1',kind:$('#cdKind').value,days:+$('#cdDays').value||30}};
+  kd.onchange=()=>{keep();render()};
+  const sc=$('#cdSchool');if(sc)sc.onchange=()=>{keep();S.codeSel.grade='*';render()};
+  ['#cdGrade','#cdVillage','#cdDays'].forEach(i=>{const e=$(i);if(e)e.onchange=()=>{keep();if(i==='#cdVillage')render()}});
   const mk=$('#cdMake');if(mk)mk.onclick=async()=>{
-    keep();const c=S.codeSel;if(!c.school||!c.grade)return;
+    keep();const c=S.codeSel;const asm=c.kind==='asm';
+    if(asm?!c.village:(!c.school||!c.grade))return;
     const days=Math.min(180,Math.max(1,c.days|0));mk.disabled=true;
     const code=genCode();const exp=new Date(Date.now()+days*864e5).toISOString();
-    const {error}=await sb.from('class_codes').insert({code_hash:await sha256hex(code),label:c.school+' '+c.grade,school:c.school,grade:c.grade,kind:c.kind,expires_at:exp});
+    const title=asm?'อสม. '+vName(c.village):c.school+' '+(c.grade==='*'?'ทุกชั้น':c.grade)+' (ครู)';
+    const row=asm?{kind:'asm',village:c.village,school:'',grade:''}:{kind:'teacher',school:c.school,grade:c.grade,village:''};
+    const {error}=await sb.from('class_codes').insert({code_hash:await sha256hex(code),label:title,expires_at:exp,...row});
     if(error){mk.disabled=false;toast('สร้างรหัสไม่ได้: '+(error.message||''));return}
-    S.newCode={code,school:c.school,grade:c.grade,kind:c.kind,exp,link:location.origin+location.pathname+'#c='+code};
+    S.newCode={code,title,exp,link:location.origin+location.pathname+'#c='+code};
     toast('สร้างรหัสแล้ว');await loadCodes();render()};
   const cp=(id,txt)=>{const b=$(id);if(b)b.onclick=async()=>{try{await navigator.clipboard.writeText(txt);toast('คัดลอกแล้ว')}catch(e){toast('คัดลอกไม่ได้ กรุณาเลือกข้อความแล้วคัดลอกเอง')}}};
   if(S.newCode){cp('#ncCopyCode',S.newCode.code);cp('#ncCopyLink',S.newCode.link);const d=$('#ncDone');if(d)d.onclick=()=>{S.newCode=null;render()}}
