@@ -152,6 +152,21 @@ tbody tr:hover{background:var(--bg)}
 details.more>summary{cursor:pointer;color:var(--accent);font-weight:600;list-style:none;min-height:44px;display:flex;align-items:center}
 details.more>summary::-webkit-details-marker{display:none}
 details.more>summary::before{content:'ⓘ';margin-right:8px}
+/* ---- ใบรหัสพร้อม QR (พิมพ์ได้) ---- */
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+.pcard{border:1.5px solid var(--line);border-radius:14px;padding:14px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px;background:#fff;color:#111}
+.pcard .pt{font-weight:700;font-size:17px;line-height:1.3}
+.pcard .pq{width:100%;max-width:200px;background:#fff}.pcard .pq svg{display:block;width:100%;height:auto}
+.pcard .pc{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:24px;font-weight:700;letter-spacing:3px}
+.pcard .pn{font-size:13px;color:#444;line-height:1.4;word-break:break-all}
+@media print{
+  body.pb{background:#fff;padding:0}
+  body.pb header.top,body.pb nav.tabs,body.pb .toast,body.pb .noprint{display:none!important}
+  body.pb .card:not(#batchCard){display:none!important}
+  body.pb #batchCard{box-shadow:none;border:0;padding:0}
+  body.pb .pgrid{grid-template-columns:repeat(2,1fr)}
+  body.pb .pcard{break-inside:avoid;border:1.5px solid #999}
+}
 /* ---- มือถือ: เมนูล่างจอ + ตารางเป็นการ์ด ---- */
 @media (max-width:700px){
   body{padding-bottom:calc(72px + env(safe-area-inset-bottom,0px))}
@@ -189,6 +204,7 @@ details.more>summary::before{content:'ⓘ';margin-right:8px}
 <div id="toast" class="toast" hidden></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script>
 /* ---------- แบบสอบถาม (ข้อความตามฉบับจริง) ---------- */
 const OBS=[
@@ -241,7 +257,7 @@ function store(k,v){try{if(v===undefined)return localStorage.getItem(k);localSto
 
 const ROLES={officer:'เจ้าหน้าที่',teacher:'ครูประจำชั้น',parent:'ผู้ปกครอง (อสม.)'};
 const TABS={
- officer:[['summary','สรุปผลการดำเนินการ'],['students','นักเรียนและการติดตาม'],['codes','รหัสห้อง'],['audit','Audit Log']],
+ officer:[['summary','สรุปผลการดำเนินการ'],['students','นักเรียนและการติดตาม'],['codes','รหัสห้อง'],['audit','Audit Log'],['qr','QR Code']],
  teacher:[['obs','แบบสังเกต 4 โรค'],['snapT','SNAP-IV (ครู)'],['summary','สรุปผล']],
  parent:[['obsP','แบบสังเกต 4 โรค'],['snapP','SNAP-IV (ไม่บังคับ)'],['summary','สรุปผล']]};
 const tabsOf=()=>TABS[S.role].filter(t=>!(codeCtx&&codeCtx.kind!=='teacher'&&t[0]==='summary'));
@@ -274,7 +290,7 @@ const STAGE={none:['ยังไม่คัดกรอง','p-mute'],normal:['
 const ASTAT={pending:'รอดำเนินการ',screened:'คัดกรองขั้นต่อไปแล้ว',referred:'ส่งต่อแพทย์/สถานพยาบาลแล้ว',follow:'ติดตามต่อเนื่อง / ปิดเคส'};
 
 /* ---------- shell ---------- */
-const TAB_IC={summary:'📊',students:'👧',codes:'🔑',audit:'📜',obs:'📝',obsP:'📝',snapT:'📋',snapP:'📋'};
+const TAB_IC={summary:'📊',students:'👧',codes:'🔑',audit:'📜',qr:'📱',obs:'📝',obsP:'📝',snapT:'📋',snapP:'📋'};
 function renderShell(){
   const rb=$('#roles');rb.className='userbar';
   rb.innerHTML=S.me?`<span class="note"><b>${esc(S.me.label||S.me.name)}</b>${S.me.label?'':' · '+ROLES[S.role]}</span>${S.role==='officer'?'<button class="btn sm" data-setpw="1">ตั้งรหัสผ่าน</button>':''}<button class="btn sm" data-logout="1">${pv?'ออกจากโหมดนี้':'ออกจากระบบ'}</button>`:'';
@@ -302,6 +318,7 @@ function render0(){
   else if(S.tab==='students')a.innerHTML=viewStudents();
   else if(S.tab==='codes'){a.innerHTML='<div class="stack">'+viewCodes()+(S.codes===null?'':pvCard())+'</div>';bindCodes();bindPv();return}
   else if(S.tab==='audit'){a.innerHTML=viewAudit();bindAudit();return}
+  else if(S.tab==='qr'){a.innerHTML=viewQr();bindQr();return}
   else a.innerHTML=viewForm();
   if(isForm())bindForm();
   if(S.tab==='summary'||S.tab==='students')bindOfficer();
@@ -978,15 +995,56 @@ function bindAudit(){
   $('#auD').onchange=e=>{S.auditFilter.d=e.target.value;render()};
   $('#auQ').onchange=e=>{S.auditFilter.q=e.target.value;render();const q=$('#auQ');if(q){q.focus();q.setSelectionRange(q.value.length,q.value.length)}};
   $('#auRef').onclick=()=>{S.audit=null;render()}}
+/* ---------- เจ้าหน้าที่: QR Code (สร้างรหัสทั้งหมด + ใบรหัสพิมพ์ได้ + QR ทางเข้าระบบ) ---------- */
+function viewQr(){
+  if(S.codes===null){loadCodes();return '<div class="empty">กำลังโหลด…</div>'}
+  const pl=batchPlan();
+  let h=`<div class="stack"><div class="card stack"><h2>QR ทางเข้าระบบ</h2>
+  <div class="note">QR นี้เปิดหน้าเข้าสู่ระบบเท่านั้น ไม่มีรหัสอยู่ในนั้น ใช้ติดประกาศหรือส่งทาง LINE ได้</div>
+  <div class="pgrid" style="grid-template-columns:minmax(0,260px)"><div class="pcard"><div class="pt">ระบบคัดกรอง 4 กลุ่มโรคและสมาธิสั้น</div><div class="pq">${qrSvg(APPURL())||''}</div><div class="pn">${esc(APPURL())}</div></div></div></div>
+  <div class="card stack"><h2>สร้างรหัสทั้งหมดพร้อม QR</h2>
+  <div class="note">สร้างรหัสครูให้ทุกโรงเรียน (ทุกชั้น) และรหัส อสม. ครบ 9 หมู่บ้านในครั้งเดียว ได้ใบรหัสพร้อม QR สำหรับพิมพ์หรือบันทึก PDF QR พาเข้าใช้งานโดยอัตโนมัติ รหัสมีอายุ 30 วัน (ถ้าต้องการอายุอื่นหรือสร้างรายเดียว ใช้แท็บรหัสห้อง)</div>
+  <div class="row" style="align-items:center"><button class="btn pri" id="cdAll" ${pl.items.length?'':'disabled'}>⚡ สร้างครบทุกโรงเรียนและ 9 หมู่บ้าน (${pl.items.length} รหัส)</button><span class="note" style="flex:1 1 220px">${pl.items.length?'ต้องกดยืนยันอีกครั้ง':'ทุกโรงเรียนและหมู่บ้านมีรหัสใช้งานอยู่แล้ว'}${pl.skipped.length?' · ข้าม '+pl.skipped.length+' รายการที่มีรหัสใช้งานอยู่แล้ว (อยากได้ใบใหม่ ให้ปิดหรือลบรหัสเดิมในแท็บรหัสห้องก่อน)':''}</span></div></div>`;
+  if(S.newBatch){h+=`<div class="card stack" id="batchCard"><div class="row noprint" style="justify-content:space-between;align-items:center"><h2>รหัสที่สร้างใหม่ ${S.newBatch.length} รหัส</h2><div class="row"><button class="btn pri" id="bhPrint">🖨️ พิมพ์ / บันทึกเป็น PDF</button><button class="btn" id="bhDone">เสร็จแล้ว ซ่อนรหัสทั้งหมด</button></div></div>
+  <div class="note noprint">รหัสแสดงครั้งเดียว ระบบเก็บเฉพาะค่าแฮช ให้พิมพ์หรือบันทึก PDF เก็บไว้ทันที และแจกเฉพาะผู้ที่เกี่ยวข้อง (ครูแต่ละโรงเรียน, อสม. แต่ละหมู่บ้าน) QR พาเข้าใช้งานโดยอัตโนมัติ</div>
+  <div class="pgrid">${S.newBatch.map(pcard).join('')}</div></div>`}
+  return h+'</div>'}
+function bindQr(){
+  const ca=$('#cdAll');if(ca)ca.onclick=async()=>{
+    const pl=batchPlan();if(!pl.items.length)return;
+    if(!allArm){allArm=true;ca.textContent='สร้าง '+pl.items.length+' รหัส? กดอีกครั้งเพื่อยืนยัน';setTimeout(()=>{if(allArm){allArm=false;if(S.tab==='qr')render()}},4000);return}
+    allArm=false;ca.disabled=true;
+    const days=Math.min(180,Math.max(1,30));const exp=new Date(Date.now()+days*864e5).toISOString();
+    const made=[];for(const it of pl.items){const code=genCode();made.push({it,code,hash:await sha256hex(code)})}
+    const {error}=await sb.from('class_codes').insert(made.map(m=>({code_hash:m.hash,label:m.it.title,expires_at:exp,kind:m.it.kind,school:m.it.school,grade:m.it.grade,village:m.it.village})));
+    if(error){ca.disabled=false;toast('สร้างรหัสไม่ได้: '+(error.message||''));return}
+    S.newBatch=made.map(m=>({code:m.code,title:m.it.title,exp,link:APPURL()+'#c='+m.code}));
+    toast('สร้าง '+made.length+' รหัสแล้ว');await loadCodes();render();window.scrollTo(0,0)};
+  const bp=$('#bhPrint');if(bp)bp.onclick=()=>{document.body.classList.add('pb');const off=()=>{document.body.classList.remove('pb');window.removeEventListener('afterprint',off)};window.addEventListener('afterprint',off);try{window.print()}catch(e){off();toast('พิมพ์ไม่ได้ ลองกด Ctrl/Cmd+P')}};
+  const bd=$('#bhDone');if(bd)bd.onclick=()=>{S.newBatch=null;render()};
+}
 /* ---------- เจ้าหน้าที่: จัดการรหัสห้อง ---------- */
 const CODE_ALPHA='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // 32 ตัว ไม่มี I O 0 1 สับสนง่าย
 function genCode(){const b=new Uint8Array(10);crypto.getRandomValues(b);return Array.from(b,x=>CODE_ALPHA[x%32]).join('')}
 async function sha256hex(t){const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return Array.from(new Uint8Array(d),x=>x.toString(16).padStart(2,'0')).join('')}
-S.codes=null;S.newCode=null;
+S.codes=null;S.newCode=null;S.newBatch=null;
+function qrSvg(t){try{if(!window.qrcode)return '';const q=qrcode(0,'M');q.addData(t);q.make();return q.createSvgTag(4,2)}catch(e){return ''}}
+const APPURL=()=>location.origin+location.pathname;
+function pcard(n){return `<div class="pcard"><div class="pt">${esc(n.title)}</div><div class="pq">${qrSvg(n.link)||'<div class="note">สร้าง QR ไม่ได้ (ไม่มีอินเทอร์เน็ต)</div>'}</div><div class="pc">${esc(n.code)}</div><div class="pn">สแกน QR หรือพิมพ์รหัสที่<br>${esc(APPURL())}<br>หมดอายุ ${new Date(n.exp).toLocaleDateString('th-TH')}</div></div>`}
+function batchPlan(){
+  const all=Object.keys(S.students).map(i=>S.students[i]);
+  const schools=[...new Set(all.map(x=>x.school).filter(Boolean))].sort(natSort);
+  const now=Date.now(),live=c=>c.active&&new Date(c.expires_at).getTime()>now;
+  const cs=(S.codes||[]).filter(live);
+  const items=[],skipped=[];
+  schools.forEach(sc=>{const t={kind:'teacher',school:sc,grade:'*',village:'',title:sc+' ทุกชั้น (ครู)'};(cs.some(c=>c.kind==='teacher'&&c.school===sc&&c.grade==='*')?skipped:items).push(t)});
+  Object.keys(VILLAGES).forEach(v=>{const t={kind:'asm',school:'',grade:'',village:v,title:'อสม. '+vName(v)};(cs.some(c=>c.kind==='asm'&&c.village===v)?skipped:items).push(t)});
+  return {items,skipped,nSchool:schools.length}}
+let allArm=false;
 async function loadCodes(){
-  const {data,error}=await sb.from('class_codes').select('id,label,school,grade,kind,expires_at,active,last_used_at,created_at').order('created_at',{ascending:false});
+  const {data,error}=await sb.from('class_codes').select('id,label,school,grade,village,kind,expires_at,active,last_used_at,created_at').order('created_at',{ascending:false});
   if(error){toast('โหลดรายการรหัสไม่ได้: '+(error.message||''));S.codes=[]}else S.codes=data;
-  if(S.tab==='codes')render()}
+  if(S.tab==='codes'||S.tab==='qr')render()}
 function viewCodes(){
   if(S.codes===null){loadCodes();return '<div class="empty">กำลังโหลด…</div>'}
   const all=Object.keys(S.students).map(i=>S.students[i]);
@@ -1010,6 +1068,7 @@ function viewCodes(){
   ${schools.length?'':'<div class="note">ยังไม่มีรายชื่อนักเรียน กรุณานำเข้ารายชื่อก่อน</div>'}</div>`;
   if(S.newCode){const n=S.newCode;h+=`<div class="card stack" style="border-color:var(--ok,#6cc4b8)"><h2>รหัสใหม่ ${esc(n.title)}</h2>
   <div style="font-size:28px;letter-spacing:4px;font-weight:700" id="ncCode">${esc(n.code)}</div>
+  <div class="pgrid" style="grid-template-columns:minmax(0,260px)">${pcard(n)}</div>
   <div class="note">ลิงก์เข้าตรง (ใส่รหัสให้อัตโนมัติ): <span id="ncLink">${esc(n.link)}</span></div>
   <div class="row"><button class="btn pri" id="ncCopyCode">คัดลอกรหัส</button><button class="btn" id="ncCopyLink">คัดลอกลิงก์</button><button class="btn" id="ncDone">เสร็จแล้ว ซ่อนรหัส</button></div>
   <div class="note">รหัสนี้จะไม่แสดงอีกหลังซ่อน หมดอายุ ${new Date(n.exp).toLocaleDateString('th-TH')}</div></div>`}
@@ -1059,7 +1118,7 @@ async function handleSession(session){
   if(codeCtx)return;
   const uid=(session&&session.user&&session.user.id)||null;
   if(uid===curUid)return; curUid=uid; stopSubs();
-  S.students={};S.shots={};S.actions={};S.sid='';S.draft=null;S.open=null;S.imp=null;S.me=null;S.codes=null;S.newCode=null;
+  S.students={};S.shots={};S.actions={};S.sid='';S.draft=null;S.open=null;S.imp=null;S.me=null;S.codes=null;S.newCode=null;S.newBatch=null;
   if(!uid){S.gate=loginGate();S.ready=true;render();return}
   S.gate=null;S.ready=false;render();
   const {data,error}=await sb.from('staff').select('role,display_name,active').eq('user_id',uid).maybeSingle();
