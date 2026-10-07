@@ -208,7 +208,7 @@ const ASTAT={pending:'รอดำเนินการ',screened:'คัดก�
 /* ---------- shell ---------- */
 function renderShell(){
   const rb=$('#roles');rb.className='userbar';
-  rb.innerHTML=S.me?`<span class="note"><b>${esc(S.me.label||S.me.name)}</b> · ${ROLES[S.role]}</span>${S.role==='officer'?'<button class="btn sm" data-setpw="1">ตั้งรหัสผ่าน</button>':''}<button class="btn sm" data-logout="1">ออกจากระบบ</button>`:'';
+  rb.innerHTML=S.me?`<span class="note"><b>${esc(S.me.label||S.me.name)}</b> · ${ROLES[S.role]}</span>${S.role==='officer'?'<button class="btn sm" data-setpw="1">ตั้งรหัสผ่าน</button>':''}<button class="btn sm" data-logout="1">${pv?'ออกจากโหมดนี้':'ออกจากระบบ'}</button>`:'';
   if(!S.me){$('#tabs').innerHTML='';return}
   if(!tabsOf().some(t=>t[0]===S.tab))S.tab=tabsOf()[0][0];
   $('#tabs').innerHTML=tabsOf().map(([k,v])=>`<button role="tab" data-tab="${k}" aria-selected="${S.tab===k}">${v}</button>`).join('');
@@ -229,7 +229,7 @@ function render(){
   if(S.dbErr){a.innerHTML='<div class="card empty">เปิดฐานข้อมูลไม่ได้ในมุมมองนี้ กรุณาเปิดผ่านบัญชีที่ลงชื่อเข้าใช้แล้ว</div>';return}
   if(S.tab==='summary')a.innerHTML=viewSummary();
   else if(S.tab==='students')a.innerHTML=viewStudents();
-  else if(S.tab==='codes'){a.innerHTML=viewCodes();bindCodes();return}
+  else if(S.tab==='codes'){a.innerHTML='<div class="stack">'+viewCodes()+(S.codes===null?'':pvCard())+'</div>';bindCodes();bindPv();return}
   else if(S.tab==='audit'){a.innerHTML=viewAudit();bindAudit();return}
   else a.innerHTML=viewForm();
   if(isForm())bindForm();
@@ -747,7 +747,7 @@ function openSetPw(){
     close();toast('ตั้งรหัสผ่านเรียบร้อย ครั้งต่อไปเข้าด้วยรหัสผ่านได้');
   };
 }
-document.addEventListener('click',e=>{if(e.target.closest('[data-logout]')){if(codeCtx)exitCode();else if(sb)sb.auth.signOut()}if(e.target.closest('[data-setpw]'))openSetPw()});
+document.addEventListener('click',e=>{if(e.target.closest('[data-logout]')){if(pv)exitPreview();else if(codeCtx)exitCode();else if(sb)sb.auth.signOut()}if(e.target.closest('[data-setpw]'))openSetPw()});
 let pwLogin=false;
 
 /* ---------- เข้าด้วยรหัสห้อง (ครู/ผู้ปกครอง ไม่ต้องล็อกอิน) ---------- */
@@ -807,6 +807,47 @@ async function exitCode(note){
   stopSubs();codeCtx=null;sessSet('sk_code','');curUid=undefined;
   S.students={};S.shots={};S.actions={};S.sid='';S.draft=null;S.school='';S.grade='';S.me=null;S.codeNote=note||'';
   const {data}=await sb.auth.getSession();handleSession(data.session)}
+
+/* ---------- เจ้าหน้าที่: ทดลองดูหน้าเว็บในฐานะครู / อสม. (อ่านอย่างเดียว ไม่บันทึกข้อมูลจริง) ---------- */
+let pv=null; // {stash}
+S.pvKind='teacher';
+function pvCard(){
+  const all=Object.keys(S.students).map(i=>S.students[i]);
+  const schools=[...new Set(all.map(x=>x.school).filter(Boolean))].sort(natSort);
+  const vCount={};all.forEach(x=>{if(x.village)vCount[x.village]=(vCount[x.village]||0)+1});
+  const k=S.pvKind;
+  const chips=k==='asm'
+    ?Object.keys(VILLAGES).map(v=>`<button class="btn sm" data-pvv="${v}">หมู่ ${v} <small>(${vCount[v]||0} คน)</small></button>`).join('')
+    :(schools.map(x=>`<button class="btn sm" data-pvs="${esc(x)}">${esc(x)}</button>`).join('')||'<span class="note">ยังไม่มีรายชื่อนักเรียน</span>');
+  return `<div class="card stack" id="pvCard"><h2>🔍 ทดลองดูหน้าเว็บในฐานะสมาชิกแต่ละประเภท</h2>
+  <div class="note">กดเพื่อดูว่าครูหรือ อสม. เห็นอะไร กรอกทดลองได้แต่<b>ไม่บันทึกข้อมูลจริง</b> กด "ออกจากโหมดนี้" เพื่อกลับมาเป็นเจ้าหน้าที่</div>
+  <div class="row"><button class="btn ${k==='teacher'?'pri':''}" data-pvk="teacher">👩‍🏫 ครู<br><small>เห็นรายชื่อและผลของโรงเรียน</small></button>
+  <button class="btn ${k==='asm'?'pri':''}" data-pvk="asm">🏡 อสม.<br><small>เห็นเด็กในหมู่บ้าน ไม่เห็นคำตอบ</small></button></div>
+  <div><b>${k==='asm'?'อสม. — เลือกหมู่บ้านที่ต้องการดู':'ครู — เลือกโรงเรียนที่ต้องการดู (ทุกชั้น)'}</b></div>
+  <div class="row">${chips}</div></div>`}
+function bindPv(){
+  document.querySelectorAll('[data-pvk]').forEach(b=>b.onclick=()=>{S.pvKind=b.dataset.pvk;render()});
+  document.querySelectorAll('[data-pvs]').forEach(b=>b.onclick=()=>startPreview('teacher',b.dataset.pvs,''));
+  document.querySelectorAll('[data-pvv]').forEach(b=>b.onclick=()=>startPreview('asm','',b.dataset.pvv))}
+function pvErr(){const x=new Error('preview');x.code='โหมดทดลองดู ไม่บันทึกข้อมูลจริง';return x}
+function startPreview(kind,school,village){
+  pv={students:S.students,shots:S.shots,actions:S.actions,me:S.me,tab:S.tab};
+  stopSubs();
+  codeCtx={code:'',kind,school,grade:'*',village,preview:true};
+  const inScope=s=>kind==='asm'?s.village===village:s.school===school;
+  const stu={};Object.keys(pv.students).forEach(id=>{const s=pv.students[id];if(inScope(s))stu[id]=Object.assign({},s,{cid:''})});
+  const shots={};Object.keys(pv.shots).forEach(id=>{const x=pv.shots[id];if(!stu[x.studentId])return;
+    if(kind==='teacher')shots[id]=x;
+    else if(x.type==='obsP'||x.type==='snapP')shots[id]={studentId:x.studentId,type:x.type,answers:Array(x.type==='obsP'?40:26).fill(null),respondent:'',rel:'',date:'',avg:'',scores:{},flags:{}}});
+  S.students=stu;S.shots=shots;S.actions={};S.sid='';S.draft=null;S.open=null;S.imp=null;
+  S.me={name:'',label:'โหมดทดลองดู · '+(kind==='asm'?'อสม. · '+vName(village):'ครูประจำชั้น · '+school+' (ทุกชั้น)'),dbRole:'preview'};
+  S.role=kind==='teacher'?'teacher':'parent';S.tab=tabsOf()[0][0];S.school=school;S.grade='';S.ready=true;
+  db={collection(){return {add:async()=>{throw pvErr()},onSnapshot:()=>()=>{}}},doc(){return {set:async()=>{throw pvErr()},delete:async()=>{throw pvErr()}}}};
+  window.scrollTo(0,0);render()}
+async function exitPreview(){
+  pv=null;codeCtx=null;curUid=undefined;
+  S.students={};S.shots={};S.actions={};S.sid='';S.draft=null;S.school='';S.grade='';S.me=null;
+  const {data}=await sb.auth.getSession();await handleSession(data.session);S.tab='codes';render()}
 
 /* ---------- เจ้าหน้าที่: Audit Log (ประวัติการใช้งาน อ่านอย่างเดียว) ---------- */
 S.audit=null;S.auditFilter={tbl:'',op:''};
