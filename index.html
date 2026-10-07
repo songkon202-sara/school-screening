@@ -167,8 +167,16 @@ details.more>summary::before{content:'ⓘ';margin-right:8px}
   body.pb header.top,body.pb nav.tabs,body.pb .toast,body.pb .noprint{display:none!important}
   body.pb .card:not(#batchCard){display:none!important}
   body.pb #batchCard{box-shadow:none;border:0;padding:0}
-  body.pb .pgrid{grid-template-columns:repeat(2,1fr)}
-  body.pb .pcard{break-inside:avoid;border:1.5px solid #999}
+  @page{size:A4;margin:10mm}
+  body.pb #batchCard{display:block!important}
+  body.pb .pgrid{display:block!important}
+  body.pb .pcard{display:inline-flex;vertical-align:top;box-sizing:border-box;width:49%;height:88mm;margin:0 0 3mm;overflow:hidden;justify-content:center;break-inside:avoid;page-break-inside:avoid;-webkit-column-break-inside:avoid;border:1.5px solid #999}
+  body.pb .pcard:nth-child(2n){margin-left:1%}
+  body.pb .pcard:nth-child(6n){break-after:page;page-break-after:always}
+  body.pb .pcard .pq{max-width:42mm}
+  body.pb .pcard .pt{font-size:15px}
+  body.pb .pcard .pc{font-size:22px}
+  body.pb .pcard .pn{font-size:11px}
 }
 /* ---- มือถือ: เมนูล่างจอ + ตารางเป็นการ์ด ---- */
 @media (max-width:700px){
