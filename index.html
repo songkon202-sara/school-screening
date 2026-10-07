@@ -324,10 +324,10 @@ function render0(){
     if(qm)bindQr();else{bindCodes();const pg=$('#pvGo');if(pg)pg.onclick=()=>{S.tab='users';S.userSub='preview';render()}}
     document.querySelectorAll('[data-csub]').forEach(b=>b.onclick=()=>{S.codeSub=b.dataset.csub;render()});return}
   else if(S.tab==='audit'){a.innerHTML=viewAudit();bindAudit();return}
-  else if(S.tab==='users'){const pm=S.userSub==='preview';
-    const seg=`<div class="row segs" style="margin-bottom:14px"><button class="btn ${pm?'':'pri'}" data-usub="list">👥 รายชื่อผู้ใช้</button><button class="btn ${pm?'pri':''}" data-usub="preview">🔍 ทดลองใช้ (ดูหน้าจอครู/อสม.)</button></div>`;
-    a.innerHTML=seg+(pm?'<div class="stack">'+pvCard()+'</div>':viewUsers());
-    if(pm)bindPv();else bindUsers();
+  else if(S.tab==='users'){const um=['staffcodes','list','preview'].includes(S.userSub)?S.userSub:'staffcodes';
+    const seg=`<div class="row segs" style="margin-bottom:14px"><button class="btn ${um==='staffcodes'?'pri':''}" data-usub="staffcodes">🔑 รหัสเจ้าหน้าที่</button><button class="btn ${um==='list'?'pri':''}" data-usub="list">👥 บัญชีผู้ดูแลระบบ</button><button class="btn ${um==='preview'?'pri':''}" data-usub="preview">🔍 ทดลองใช้ (ดูหน้าจอครู/อสม.)</button></div>`;
+    a.innerHTML=seg+(um==='preview'?'<div class="stack">'+pvCard()+'</div>':um==='list'?viewUsers():viewStaffCodes());
+    if(um==='preview')bindPv();else if(um==='list')bindUsers();else bindStaffCodes();
     document.querySelectorAll('[data-usub]').forEach(b=>b.onclick=()=>{S.userSub=b.dataset.usub;render()});return}
   else a.innerHTML=viewForm();
   if(isForm())bindForm();
@@ -921,7 +921,7 @@ async function exitCode(note){
 
 /* ---------- เจ้าหน้าที่: ทดลองดูหน้าเว็บในฐานะครู / อสม. (อ่านอย่างเดียว ไม่บันทึกข้อมูลจริง) ---------- */
 let pv=null; // {stash}
-S.pvKind='teacher';S.codeSub='one';S.userSub='list';
+S.pvKind='teacher';S.codeSub='one';S.userSub='staffcodes';
 function pvCard(){
   const all=Object.keys(S.students).map(i=>S.students[i]);
   const schools=[...new Set(all.map(x=>x.school).filter(Boolean))].sort(natSort);
@@ -968,12 +968,64 @@ async function loadUsers(){
   if(error){S.users=[];S.usersErr=error.message||'';toast('โหลดรายชื่อผู้ใช้ไม่ได้: '+(error.message||''))}else{S.users=data||[];S.usersErr=''}
   if(S.tab==='users')render()}
 const fmtDT=t=>{try{return t?new Date(t).toLocaleString('th-TH',{dateStyle:'medium',timeStyle:'short',timeZone:'Asia/Bangkok'}):'-'}catch(e){return '-'}};
+/* ---------- เจ้าหน้าที่: สร้างรหัสประจำตัวเจ้าหน้าที่ (อยู่ในแท็บผู้ใช้งาน) ---------- */
+function viewStaffCodes(){
+  if(S.codes===null){loadCodes();return '<div class="empty">กำลังโหลด…</div>'}
+  const sel=S.scSel||(S.scSel={name:'',exp:addDays(30)});
+  const now=Date.now();
+  const list=(S.codes||[]).filter(c=>c.kind==='staff');
+  let h=`<div class="stack"><div class="card stack"><h2>🔑 สร้างรหัสประจำตัวเจ้าหน้าที่</h2>
+  <div class="note">ออกให้เป็น<b>รายคน</b> (หนึ่งคนหนึ่งรหัส) ผู้ถือรหัสใส่รหัสที่หน้าแรกของเว็บได้เลย ไม่ต้องมีอีเมลหรือสมัครบัญชี เห็นเด็ก<b>ทุกโรงเรียน</b> กรอกแบบประเมินได้ทั้งแบบครูและแบบผู้ปกครอง ดูสรุปผลได้ แต่ลบ นำเข้ารายชื่อ จัดการรหัส และดู Audit Log ไม่ได้ รหัสแสดงครั้งเดียวตอนสร้าง ต้องคัดลอกส่งทันที</div>
+  <div class="row"><label class="f" style="flex-basis:280px">ชื่อเจ้าหน้าที่ (ผู้ถือรหัส)<input type="text" id="scName" maxlength="60" autocomplete="off" placeholder="เช่น สมศรี รพ.สต.สองคอน" value="${esc(sel.name)}"></label>
+  ${expPicker('scExp',sel.exp||addDays(30))}
+  <button class="btn pri" id="scMake">สร้างรหัส</button></div>
+  <div class="note">ควรตั้งวันหมดอายุสั้น (30–90 วัน) และปิดรหัสทันทีเมื่อเจ้าหน้าที่ย้ายหรือเลิกใช้ รหัสรั่วเท่ากับเห็นชื่อเด็กทุกคน</div></div>`;
+  if(S.newCode&&S.newCode.staff){const n=S.newCode;h+=`<div class="card stack" style="border-color:var(--ok,#6cc4b8)"><h2>รหัสใหม่ ${esc(n.title)}</h2>
+  <div style="font-size:28px;letter-spacing:4px;font-weight:700" id="ncCode">${esc(n.code)}</div>
+  <div class="pgrid" style="grid-template-columns:minmax(0,260px)">${pcard(n)}</div>
+  <div class="note">ลิงก์เข้าตรง (ใส่รหัสให้อัตโนมัติ): <span id="ncLink">${esc(n.link)}</span></div>
+  <div class="row"><button class="btn pri" id="ncCopyCode">คัดลอกรหัส</button><button class="btn" id="ncCopyLink">คัดลอกลิงก์</button><button class="btn" id="ncDone">เสร็จแล้ว ซ่อนรหัส</button></div>
+  <div class="note">รหัสนี้จะไม่แสดงอีกหลังซ่อน หมดอายุ ${new Date(n.exp).toLocaleDateString('th-TH')}</div></div>`}
+  h+=`<div class="card stack"><h2>รหัสเจ้าหน้าที่ที่ออกไว้ (${list.length})</h2><div class="tblw"><table><thead><tr><th>ชื่อผู้ถือรหัส</th><th>หมดอายุ</th><th>ใช้ล่าสุด</th><th>สถานะ</th><th></th></tr></thead><tbody>
+  ${list.map(c=>{const exp=new Date(c.expires_at).getTime()<now;const st=!c.active?['ปิดแล้ว','p-mute']:exp?['หมดอายุ','p-warn']:['ใช้งานได้','p-ok'];
+   return `<tr><td data-l="ชื่อ">${esc(c.label)}</td><td data-l="หมดอายุ" class="nw">${new Date(c.expires_at).toLocaleDateString('th-TH')}</td><td data-l="ใช้ล่าสุด" class="nw">${c.last_used_at?new Date(c.last_used_at).toLocaleString('th-TH',{dateStyle:'short',timeStyle:'short'}):'-'}</td><td data-l="สถานะ"><span class="pill ${st[1]}">${st[0]}</span></td>
+   <td><button class="btn sm" data-cdtoggle="${c.id}" data-on="${c.active?1:0}">${c.active?'ปิดรหัส':'เปิดรหัส'}</button> <button class="btn sm" data-cddel="${c.id}">ลบ</button></td></tr>`}).join('')||'<tr><td colspan="5" class="muted">ยังไม่มีรหัสเจ้าหน้าที่</td></tr>'}
+  </tbody></table></div></div></div>`;
+  return h}
+function bindStaffCodes(){
+  const nm=$('#scName');if(!nm)return;
+  const keep=()=>{S.scSel={name:$('#scName').value,exp:($('#scExp')||{}).value||addDays(30)}};
+  nm.oninput=keep;const ex=$('#scExp');if(ex)ex.onchange=keep;bindExp(()=>keep());
+  const mk=$('#scMake');mk.onclick=async()=>{
+    keep();const name=S.scSel.name.trim();
+    if(!name){toast('กรุณากรอกชื่อเจ้าหน้าที่ผู้ถือรหัส');return}
+    const exp=expIso(S.scSel.exp);if(!exp){toast('วันหมดอายุต้องอยู่ระหว่างพรุ่งนี้ถึงไม่เกิน 1 ปี');return}
+    mk.disabled=true;const code=genCode();
+    const {error}=await sb.from('class_codes').insert({code_hash:await sha256hex(code),label:name,expires_at:exp,kind:'staff',school:'',grade:'',village:''});
+    if(error){mk.disabled=false;toast('สร้างรหัสไม่ได้: '+(error.message||''));return}
+    S.newCode={code,title:'เจ้าหน้าที่ '+name,exp,staff:true,link:location.origin+location.pathname+'#c='+code};
+    S.scSel={name:'',exp:S.scSel.exp};
+    toast('สร้างรหัสแล้ว');await loadCodes();render()};
+  const cp=(id,txt)=>{const b=$(id);if(b)b.onclick=async()=>{try{await navigator.clipboard.writeText(txt);toast('คัดลอกแล้ว')}catch(e){toast('คัดลอกไม่ได้ กรุณาเลือกข้อความแล้วคัดลอกเอง')}}};
+  if(S.newCode&&S.newCode.staff){cp('#ncCopyCode',S.newCode.code);cp('#ncCopyLink',S.newCode.link);const d=$('#ncDone');if(d)d.onclick=()=>{S.newCode=null;render()}}
+  document.querySelectorAll('[data-cdtoggle]').forEach(b=>b.onclick=async()=>{
+    const on=b.dataset.on==='1';b.disabled=true;
+    const {error}=await sb.from('class_codes').update({active:!on}).eq('id',b.dataset.cdtoggle);
+    if(error){toast('ทำรายการไม่ได้: '+(error.message||''));b.disabled=false;return}
+    toast(on?'ปิดรหัสแล้ว':'เปิดรหัสแล้ว');loadCodes()});
+  document.querySelectorAll('[data-cddel]').forEach(b=>b.onclick=async()=>{
+    const id=b.dataset.cddel;
+    if(codeDelArm!==id){codeDelArm=id;b.textContent='กดอีกครั้งเพื่อยืนยัน';setTimeout(()=>{if(codeDelArm===id){codeDelArm=null;if(S.tab==='users')render()}},3000);return}
+    codeDelArm=null;b.disabled=true;
+    const {error}=await sb.from('class_codes').delete().eq('id',id);
+    if(error){toast('ลบไม่ได้: '+(error.message||''));b.disabled=false;return}
+    toast('ลบรหัสแล้ว');loadCodes()})}
 function viewUsers(){
   if(S.users===null){loadUsers();return '<div class="empty">กำลังโหลด…</div>'}
   const pend=S.users.filter(u=>!u.role),mem=S.users.filter(u=>u.role);
   const uid=(S.me&&S.me.uid)||'';
   let h=`<div class="stack"><div class="card stack"><h2>👥 ผู้ใช้งาน</h2>
-  <div class="note">คนที่ล็อกอินด้วยอีเมลแล้วแต่ยังไม่มีสิทธิ์ จะขึ้นในกล่อง “รออนุมัติ” ให้กดอนุมัติที่นี่ เจ้าหน้าที่ที่อนุมัติจะเห็นข้อมูลนักเรียนทั้งหมด จึงอนุมัติเฉพาะคนที่ได้รับอนุญาต เจ้าหน้าที่ ครู และ อสม. ใช้รหัสจากแท็บ รหัสห้อง ไม่ต้องมีบัญชีที่นี่ แท็บนี้ไว้ดูแลบัญชีผู้ดูแลระบบ (อีเมล) เท่านั้น</div>
+  <div class="note">หน้านี้ดูแลเฉพาะ <b>บัญชีผู้ดูแลระบบ</b> (เข้าด้วยอีเมล) ผู้ดูแลระบบเห็นและจัดการข้อมูลทั้งหมด จึงมีให้น้อยที่สุด เจ้าหน้าที่ทั่วไป ครู และ อสม. ไม่ต้องมีบัญชี ให้ออกรหัสที่ปุ่ม “รหัสเจ้าหน้าที่” หรือแท็บ รหัสห้อง</div>
   ${S.usersErr?`<div class="res bad"><b>โหลดไม่ได้</b><div>${esc(S.usersErr)}</div><div class="note">ถ้ายังไม่ได้รันไฟล์ 04_staff_admin.sql ใน Supabase ให้รันก่อน</div></div>`:''}
   <h3>รออนุมัติ (${pend.length})</h3>
   ${pend.length?`<div class="tblw"><table><thead><tr><th>อีเมล</th><th>ลงชื่อเข้าครั้งแรก</th><th>ชื่อที่แสดง</th><th></th></tr></thead><tbody>${pend.map(u=>`<tr><td data-l="อีเมล">${esc(u.email)}</td><td data-l="ลงชื่อเข้าครั้งแรก">${esc(fmtDT(u.created_at))}</td><td data-l="ชื่อที่แสดง"><input data-uname="${u.user_id}" placeholder="ชื่อ-สกุล / ตำแหน่ง" maxlength="80"></td><td><button class="btn pri sm" data-uappr="${u.user_id}">อนุมัติเป็นเจ้าหน้าที่</button></td></tr>`).join('')}</tbody></table></div>`:'<div class="note">ไม่มีผู้รออนุมัติ</div>'}
@@ -1101,7 +1153,7 @@ let allArm=false;
 async function loadCodes(){
   const {data,error}=await sb.from('class_codes').select('id,label,school,grade,village,kind,expires_at,active,last_used_at,created_at').order('created_at',{ascending:false});
   if(error){toast('โหลดรายการรหัสไม่ได้: '+(error.message||''));S.codes=[]}else S.codes=data;
-  if(S.tab==='codes')render()}
+  if(S.tab==='codes'||S.tab==='users')render()}
 function viewCodes(){
   if(S.codes===null){loadCodes();return '<div class="empty">กำลังโหลด…</div>'}
   const all=Object.keys(S.students).map(i=>S.students[i]);
