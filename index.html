@@ -173,9 +173,10 @@ function store(k,v){try{if(v===undefined)return localStorage.getItem(k);localSto
 
 const ROLES={officer:'เจ้าหน้าที่',teacher:'ครูประจำชั้น',parent:'ผู้ปกครอง (อสม.)'};
 const TABS={
- officer:[['summary','สรุปผลการดำเนินการ'],['students','นักเรียนและการติดตาม']],
+ officer:[['summary','สรุปผลการดำเนินการ'],['students','นักเรียนและการติดตาม'],['codes','รหัสห้อง']],
  teacher:[['obs','แบบสังเกต 4 โรค'],['snapT','SNAP-IV (ครู)'],['summary','สรุปผล']],
  parent:[['obsP','แบบสังเกต 4 โรค'],['snapP','SNAP-IV (ไม่บังคับ)'],['summary','สรุปผล']]};
+const tabsOf=()=>TABS[S.role].filter(t=>!(codeCtx&&codeCtx.kind==='parent'&&t[0]==='summary'));
 const isObsTab=t=>t==='obs'||t==='obsP';
 
 /* ---------- ข้อมูลที่คำนวณต่อคน ---------- */
@@ -204,10 +205,10 @@ const ASTAT={pending:'รอดำเนินการ',screened:'คัดก�
 /* ---------- shell ---------- */
 function renderShell(){
   const rb=$('#roles');rb.className='userbar';
-  rb.innerHTML=S.me?`<span class="note"><b>${esc(S.me.name)}</b> · ${ROLES[S.role]}</span>${S.role==='officer'?'<button class="btn sm" data-setpw="1">ตั้งรหัสผ่าน</button>':''}<button class="btn sm" data-logout="1">ออกจากระบบ</button>`:'';
+  rb.innerHTML=S.me?`<span class="note"><b>${esc(S.me.label||S.me.name)}</b> · ${ROLES[S.role]}</span>${S.role==='officer'?'<button class="btn sm" data-setpw="1">ตั้งรหัสผ่าน</button>':''}<button class="btn sm" data-logout="1">ออกจากระบบ</button>`:'';
   if(!S.me){$('#tabs').innerHTML='';return}
-  if(!TABS[S.role].some(t=>t[0]===S.tab))S.tab=TABS[S.role][0][0];
-  $('#tabs').innerHTML=TABS[S.role].map(([k,v])=>`<button role="tab" data-tab="${k}" aria-selected="${S.tab===k}">${v}</button>`).join('');
+  if(!tabsOf().some(t=>t[0]===S.tab))S.tab=tabsOf()[0][0];
+  $('#tabs').innerHTML=tabsOf().map(([k,v])=>`<button role="tab" data-tab="${k}" aria-selected="${S.tab===k}">${v}</button>`).join('');
 }
 document.addEventListener('click',e=>{
   const r=e.target.closest('[data-role]');
@@ -225,6 +226,7 @@ function render(){
   if(S.dbErr){a.innerHTML='<div class="card empty">เปิดฐานข้อมูลไม่ได้ในมุมมองนี้ กรุณาเปิดผ่านบัญชีที่ลงชื่อเข้าใช้แล้ว</div>';return}
   if(S.tab==='summary')a.innerHTML=viewSummary();
   else if(S.tab==='students')a.innerHTML=viewStudents();
+  else if(S.tab==='codes'){a.innerHTML=viewCodes();bindCodes();return}
   else a.innerHTML=viewForm();
   if(isForm())bindForm();
   if(S.tab==='summary'||S.tab==='students')bindOfficer();
@@ -502,7 +504,7 @@ function formDocId(){return S.sid?S.sid+'_'+S.tab:''}
 function loadDraft(){
   const ex=S.shots[formDocId()];
   const n=isObsTab(S.tab)?40:SNAP_N;
-  S.draft=ex?{answers:[...ex.answers],respondent:ex.respondent||'',date:ex.date||'',rel:ex.rel||'',avg:ex.avg||'',term:ex.term||''}
+  S.draft=ex?{answers:[...ex.answers],respondent:ex.respondent||'',date:ex.date||new Date().toISOString().slice(0,10),rel:ex.rel||'',avg:ex.avg||'',term:ex.term||''}
     :{answers:Array(n).fill(null),respondent:(S.me&&S.me.name)||'',date:new Date().toISOString().slice(0,10),rel:(S.tab==='snapP'||S.tab==='obsP')?'ผู้ปกครอง':'',avg:'',term:''};
 }
 function viewForm(){
@@ -517,7 +519,7 @@ function viewForm(){
   <label class="f" style="flex-basis:130px;flex-grow:0">ชั้น<select id="gSel"><option value="">ทุกชั้น</option>${grades.map(g=>`<option ${S.grade===g?'selected':''}>${esc(g)}</option>`).join('')}</select></label>
   <label class="f" style="flex-basis:260px">นักเรียน<select id="sSel"><option value="">— เลือกนักเรียน —</option>${list.map(i=>`<option value="${i}" ${S.sid===i?'selected':''}>${esc(S.students[i].name)}${S.students[i].grade?' ('+esc(S.students[i].grade)+')':''}${!S.school&&S.students[i].school?' – '+esc(S.students[i].school):''}${S.shots[i+'_'+S.tab]?' ✓':''}${S.tab==='snapT'&&derive(i).needSnap?' ⚑ ต้องทำ':''}</option>`).join('')}</select></label></div>
   ${S.tab==='snapT'?`<label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="onlyNeed" ${S.onlyNeed?'checked':''}> แสดงเฉพาะนักเรียนที่ต้องทำ SNAP-IV (${ids.filter(i=>derive(i).needSnap).length} คน)</label>`:''}
-  ${S.role!=='parent'?'<details id="addBox"><summary class="btn sm" style="display:inline-block">+ เพิ่มนักเรียนใหม่</summary><div style="margin-top:12px">'+studentForm().replace('class="card stack"','class="stack"').replace('<h2>เพิ่มนักเรียน</h2>','')+'</div></details>':''}
+  ${S.role!=='parent'&&!codeCtx?'<details id="addBox"><summary class="btn sm" style="display:inline-block">+ เพิ่มนักเรียนใหม่</summary><div style="margin-top:12px">'+studentForm().replace('class="card stack"','class="stack"').replace('<h2>เพิ่มนักเรียน</h2>','')+'</div></details>':''}
   </div>`;
   if(!S.sid){return h+`<div class="card empty">${ids.length?'เลือกนักเรียนเพื่อเริ่มกรอกแบบประเมิน':'ยังไม่มีรายชื่อนักเรียน '+(S.role==='parent'?'กรุณาแจ้งเจ้าหน้าที่หรือครูประจำชั้น':'เพิ่มรายชื่อนักเรียนด้านบนก่อน')}</div></div>`}
   if(!S.draft)loadDraft();
@@ -649,7 +651,12 @@ dl={save:async({filename,data})=>{
   setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},800);return {status:'saved'}}};
 
 function gateCard(inner){return `<div class="card stack" style="max-width:520px;margin:24px auto">${inner}</div>`}
-function loginGate(){return gateCard(`<h2>เข้าสู่ระบบ</h2>
+function loginGate(){return gateCard(`<h2>เข้าด้วยรหัสห้อง</h2>
+  <div class="note">สำหรับครูและผู้ปกครอง ใส่รหัสห้องที่เจ้าหน้าที่หรือครูแจกให้ ไม่ต้องสมัครสมาชิกและไม่ต้องใช้อีเมล</div>
+  <label class="f" style="flex:none">รหัสห้อง<input type="text" id="cdIn" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="16" placeholder="เช่น K7M2Q9XB4P" style="letter-spacing:2px;text-transform:uppercase"></label>
+  <div><button class="btn pri" id="cdGo">เข้าใช้งาน</button></div><div id="cdMsg" class="note" role="status">${esc(S.codeNote||'')}</div>
+  <hr style="border:0;border-top:1px solid var(--line,#444);width:100%">
+  <h2>เข้าสู่ระบบด้วยอีเมล</h2>
   <div class="note">กรอกอีเมลที่เจ้าหน้าที่ลงทะเบียนไว้ ระบบจะส่งลิงก์เข้าสู่ระบบไปให้ทางอีเมล (ไม่ต้องใช้รหัสผ่าน) เปิดลิงก์บนเครื่องนี้เพื่อเข้าใช้งาน</div>
   <label class="f" style="flex:none">อีเมล<input type="text" id="lgEmail" inputmode="email" autocomplete="email" placeholder="name@example.com"></label>
   <div><button class="btn pri" id="lgGo">ส่งลิงก์เข้าสู่ระบบ</button></div><div id="lgMsg" class="note" role="status">${esc(S.loginNote||'')}</div>
@@ -665,6 +672,14 @@ function noAccessGate(why){return gateCard(`<h2>ยังไม่ได้ร�
 function setupGate(){return gateCard(`<h2>ยังไม่ได้ตั้งค่าการเชื่อมต่อ</h2>
   <div class="note">เปิดไฟล์ config.js แล้วใส่ SUPABASE_URL และ SUPABASE_ANON_KEY ของโปรเจกต์ Supabase (ดูขั้นตอนในคู่มือ)</div>`)}
 function bindGate(){
+  const cg=$('#cdGo');
+  if(cg){const cdSend=async()=>{
+    const code=$('#cdIn').value.trim(),m=$('#cdMsg');
+    if(code.length<6){m.textContent='กรุณาใส่รหัสห้อง';return}
+    cg.disabled=true;m.textContent='กำลังตรวจรหัส…';
+    const r=await enterCode(code);
+    cg.disabled=false;if(r)m.textContent=r};
+    cg.onclick=cdSend;$('#cdIn').onkeydown=e=>{if(e.key==='Enter')cdSend()}}
   const go=$('#lgGo');if(!go)return;
   const send=async()=>{
     const email=$('#lgEmail').value.trim().toLowerCase(),msg=$('#lgMsg');
@@ -709,14 +724,131 @@ function openSetPw(){
     close();toast('ตั้งรหัสผ่านเรียบร้อย ครั้งต่อไปเข้าด้วยรหัสผ่านได้');
   };
 }
-document.addEventListener('click',e=>{if(e.target.closest('[data-logout]')&&sb)sb.auth.signOut();if(e.target.closest('[data-setpw]'))openSetPw()});
+document.addEventListener('click',e=>{if(e.target.closest('[data-logout]')){if(codeCtx)exitCode();else if(sb)sb.auth.signOut()}if(e.target.closest('[data-setpw]'))openSetPw()});
 let pwLogin=false;
+
+/* ---------- เข้าด้วยรหัสห้อง (ครู/ผู้ปกครอง ไม่ต้องล็อกอิน) ---------- */
+let codeCtx=null;
+function sessGet(k){try{return sessionStorage.getItem(k)||''}catch(e){return ''}}
+function sessSet(k,v){try{if(v)sessionStorage.setItem(k,v);else sessionStorage.removeItem(k)}catch(e){}}
+const CODE_ERR={invalid:'รหัสไม่ถูกต้อง หรือหมดอายุแล้ว กรุณาตรวจรหัสหรือแจ้งเจ้าหน้าที่',locked:'ใส่รหัสผิดหลายครั้ง ระบบล็อกชั่วคราว กรุณารอ 10 นาทีแล้วลองใหม่',
+  forbidden_type:'รหัสนี้ไม่มีสิทธิ์บันทึกแบบประเมินชนิดนี้',forbidden_student:'รหัสนี้ไม่มีสิทธิ์บันทึกให้เด็กคนนี้',bad_data:'ข้อมูลไม่ครบหรือไม่ถูกต้อง'};
+function codeErr(r){const x=new Error((r&&r.error)||'error');x.code=CODE_ERR[r&&r.error]||'ไม่ทราบสาเหตุ';x.fatal=!!(r&&(r.error==='invalid'||r.error==='locked'));return x}
+async function codeCall(fn,args){
+  const {data,error}=await sb.rpc(fn,args);
+  if(error)throw dbError(error);
+  if(!data||data.ok===false)throw codeErr(data);
+  return data}
+function makeDbCode(){
+  const loaders=new Set();let inflight=null,at=0;
+  const fetchCode=()=>{const now=Date.now();if(inflight&&now-at<2500)return inflight;at=now;inflight=codeCall('code_load',{p_code:codeCtx.code});return inflight};
+  const MAP={
+    students:{rows:d=>d.students,doc:r=>({name:r.name,cid:'',age:r.age||'',grade:r.grade||'',school:r.school||''})},
+    screenings:{rows:d=>d.screenings,doc:r=>({studentId:r.student_id,type:r.type,answers:r.answers,respondent:r.respondent||'',rel:r.rel||'',date:r.date||'',avg:r.avg||'',scores:r.scores,flags:r.flags})},
+    actions:{rows:()=>[],doc:()=>({conds:{}})}};
+  function watch(t,cb,errcb){
+    let alive=true;
+    const load=async()=>{if(!alive||!codeCtx)return;
+      try{const d=await fetchCode();if(alive)cb({docs:MAP[t].rows(d).map(r=>({id:r.id||r.student_id,data:()=>MAP[t].doc(r)}))})}
+      catch(e){if(alive&&errcb)errcb(e)}};
+    loaders.add(load);const poll=setInterval(load,20000);load();
+    return ()=>{alive=false;clearInterval(poll);loaders.delete(load)}}
+  return {
+    collection(t){return {add:async()=>{throw codeErr({error:'forbidden_type'})},onSnapshot:(cb,e)=>watch(t,cb,e)}},
+    doc(path){const [t,id]=path.split('/');return {
+      set:async o=>{
+        if(t!=='screenings')throw codeErr({error:'forbidden_type'});
+        const row={id,student_id:o.studentId,type:o.type,answers:o.answers,respondent:o.respondent||'',rel:o.rel||'',date:o.date||null,avg:o.avg||'',scores:o.scores,flags:o.flags};
+        await codeCall('code_save',{p_code:codeCtx.code,p:row});
+        inflight=null;loaders.forEach(f=>f())},
+      delete:async()=>{throw codeErr({error:'forbidden_type'})}}}}}
+async function enterCode(code,quiet){
+  code=String(code||'').trim().toUpperCase();
+  const {data,error}=await sb.rpc('code_load',{p_code:code});
+  if(error){return 'เชื่อมต่อไม่สำเร็จ กรุณาลองใหม่'}
+  if(!data||data.ok===false){sessSet('sk_code','');return CODE_ERR[data&&data.error]||'ไม่ทราบสาเหตุ'}
+  stopSubs();codeCtx={code,kind:data.kind,school:data.school,grade:data.grade};curUid='code';
+  sessSet('sk_code',code);
+  S.students={};S.shots={};S.actions={};S.sid='';S.draft=null;S.open=null;S.imp=null;S.gate=null;S.codeNote='';S.ready=false;
+  S.me={name:'',label:(data.kind==='teacher'?'ครูประจำชั้น':'ผู้ปกครอง')+' · '+data.school+' '+data.grade,dbRole:'code'};
+  S.role=data.kind==='teacher'?'teacher':'parent';S.tab=tabsOf()[0][0];S.canWrite=true;
+  S.school=data.school;S.grade=data.grade;
+  db=makeDbCode();
+  let first=0;const hit=()=>{if(++first>=3)S.ready=true;refresh()};
+  const err=e=>{if(e&&e.fatal){exitCode(e.code);return}toast('เชื่อมต่อฐานข้อมูลไม่สำเร็จ กำลังลองใหม่')};
+  subsOff.push(db.collection('students').onSnapshot(s=>{S.students=snapToMap(s);if(S.sid&&!S.students[S.sid]){S.sid='';S.draft=null}hit()},err));
+  subsOff.push(db.collection('screenings').onSnapshot(s=>{S.shots=snapToMap(s);hit()},err));
+  subsOff.push(db.collection('actions').onSnapshot(s=>{S.actions=snapToMap(s);hit()},err));
+  render();return ''}
+async function exitCode(note){
+  stopSubs();codeCtx=null;sessSet('sk_code','');curUid=undefined;
+  S.students={};S.shots={};S.actions={};S.sid='';S.draft=null;S.school='';S.grade='';S.me=null;S.codeNote=note||'';
+  const {data}=await sb.auth.getSession();handleSession(data.session)}
+
+/* ---------- เจ้าหน้าที่: จัดการรหัสห้อง ---------- */
+const CODE_ALPHA='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // 32 ตัว ไม่มี I O 0 1 สับสนง่าย
+function genCode(){const b=new Uint8Array(10);crypto.getRandomValues(b);return Array.from(b,x=>CODE_ALPHA[x%32]).join('')}
+async function sha256hex(t){const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return Array.from(new Uint8Array(d),x=>x.toString(16).padStart(2,'0')).join('')}
+S.codes=null;S.newCode=null;
+async function loadCodes(){
+  const {data,error}=await sb.from('class_codes').select('id,label,school,grade,kind,expires_at,active,last_used_at,created_at').order('created_at',{ascending:false});
+  if(error){toast('โหลดรายการรหัสไม่ได้: '+(error.message||''));S.codes=[]}else S.codes=data;
+  if(S.tab==='codes')render()}
+function viewCodes(){
+  if(S.codes===null){loadCodes();return '<div class="empty">กำลังโหลด…</div>'}
+  const all=Object.keys(S.students).map(i=>S.students[i]);
+  const schools=[...new Set(all.map(x=>x.school).filter(Boolean))].sort(natSort);
+  const sel=S.codeSel||{school:schools[0]||'',grade:'',kind:'teacher',days:30};
+  const grades=[...new Set(all.filter(x=>x.school===sel.school).map(x=>x.grade).filter(Boolean))].sort(natSort);
+  if(!grades.includes(sel.grade))sel.grade=grades[0]||'';S.codeSel=sel;
+  const now=Date.now();
+  let h=`<div class="stack"><div class="card stack"><h2>สร้างรหัสห้อง</h2>
+  <div class="note">รหัสให้ครูหรือผู้ปกครองเข้าดูรายชื่อเด็กในห้องนั้นและกรอกแบบประเมินได้โดยไม่ต้องสมัครสมาชิก รหัสครูเห็นผลของเด็กในห้อง รหัสผู้ปกครองเห็นเฉพาะรายชื่อ ระบบเก็บเฉพาะค่าแฮชของรหัส จึง<b>เห็นรหัสได้ครั้งเดียวตอนสร้าง</b> ต้องคัดลอกส่งทันที ถ้าหายให้ปิดรหัสเก่าแล้วสร้างใหม่</div>
+  <div class="row"><label class="f" style="flex-basis:220px">โรงเรียน<select id="cdSchool">${schools.map(x=>`<option ${sel.school===x?'selected':''}>${esc(x)}</option>`).join('')}</select></label>
+  <label class="f" style="flex-basis:120px">ชั้น<select id="cdGrade">${grades.map(x=>`<option ${sel.grade===x?'selected':''}>${esc(x)}</option>`).join('')}</select></label>
+  <label class="f" style="flex-basis:150px">สำหรับ<select id="cdKind"><option value="teacher" ${sel.kind==='teacher'?'selected':''}>ครูประจำชั้น</option><option value="parent" ${sel.kind==='parent'?'selected':''}>ผู้ปกครอง</option></select></label>
+  <label class="f" style="flex-basis:110px;flex-grow:0">อายุรหัส (วัน)<input type="number" id="cdDays" min="1" max="180" value="${sel.days}"></label>
+  <button class="btn pri" id="cdMake" ${grades.length?'':'disabled'}>สร้างรหัส</button></div>
+  ${schools.length?'':'<div class="note">ยังไม่มีรายชื่อนักเรียน กรุณานำเข้ารายชื่อก่อน</div>'}</div>`;
+  if(S.newCode){const n=S.newCode;h+=`<div class="card stack" style="border-color:var(--ok,#6cc4b8)"><h2>รหัสใหม่ ${esc(n.school)} ${esc(n.grade)} (${n.kind==='teacher'?'ครู':'ผู้ปกครอง'})</h2>
+  <div style="font-size:28px;letter-spacing:4px;font-weight:700" id="ncCode">${esc(n.code)}</div>
+  <div class="note">ลิงก์เข้าตรง (ใส่รหัสให้อัตโนมัติ): <span id="ncLink">${esc(n.link)}</span></div>
+  <div class="row"><button class="btn pri" id="ncCopyCode">คัดลอกรหัส</button><button class="btn" id="ncCopyLink">คัดลอกลิงก์</button><button class="btn" id="ncDone">เสร็จแล้ว ซ่อนรหัส</button></div>
+  <div class="note">รหัสนี้จะไม่แสดงอีกหลังซ่อน หมดอายุ ${new Date(n.exp).toLocaleDateString('th-TH')}</div></div>`}
+  h+=`<div class="card stack"><h2>รหัสที่สร้างไว้</h2><div class="tblw"><table><thead><tr><th>โรงเรียน</th><th>ชั้น</th><th>สำหรับ</th><th>หมดอายุ</th><th>ใช้ล่าสุด</th><th>สถานะ</th><th></th></tr></thead><tbody>
+  ${(S.codes||[]).map(c=>{const exp=new Date(c.expires_at).getTime()<now;const st=!c.active?['ปิดแล้ว','p-mute']:exp?['หมดอายุ','p-mute']:['ใช้งานได้','p-ok'];
+   return `<tr><td>${esc(c.school)}</td><td>${esc(c.grade)}</td><td>${c.kind==='teacher'?'ครู':'ผู้ปกครอง'}</td><td class="nw">${new Date(c.expires_at).toLocaleDateString('th-TH')}</td><td class="nw">${c.last_used_at?new Date(c.last_used_at).toLocaleString('th-TH',{dateStyle:'short',timeStyle:'short'}):'-'}</td>
+   <td><span class="pill ${st[1]}">${st[0]}</span></td><td><button class="btn sm" data-cdtoggle="${c.id}" data-on="${c.active?1:0}">${c.active?'ปิดรหัส':'เปิดรหัส'}</button></td></tr>`}).join('')||'<tr><td colspan="7" class="muted">ยังไม่มีรหัส</td></tr>'}
+  </tbody></table></div></div></div>`;
+  return h}
+function bindCodes(){
+  const sc=$('#cdSchool');if(!sc)return;
+  const keep=()=>{S.codeSel={school:$('#cdSchool').value,grade:($('#cdGrade')||{}).value||'',kind:$('#cdKind').value,days:+$('#cdDays').value||30}};
+  sc.onchange=()=>{keep();S.codeSel.grade='';render()};
+  ['#cdGrade','#cdKind','#cdDays'].forEach(i=>{const e=$(i);if(e)e.onchange=keep});
+  const mk=$('#cdMake');if(mk)mk.onclick=async()=>{
+    keep();const c=S.codeSel;if(!c.school||!c.grade)return;
+    const days=Math.min(180,Math.max(1,c.days|0));mk.disabled=true;
+    const code=genCode();const exp=new Date(Date.now()+days*864e5).toISOString();
+    const {error}=await sb.from('class_codes').insert({code_hash:await sha256hex(code),label:c.school+' '+c.grade,school:c.school,grade:c.grade,kind:c.kind,expires_at:exp});
+    if(error){mk.disabled=false;toast('สร้างรหัสไม่ได้: '+(error.message||''));return}
+    S.newCode={code,school:c.school,grade:c.grade,kind:c.kind,exp,link:location.origin+location.pathname+'#c='+code};
+    toast('สร้างรหัสแล้ว');await loadCodes();render()};
+  const cp=(id,txt)=>{const b=$(id);if(b)b.onclick=async()=>{try{await navigator.clipboard.writeText(txt);toast('คัดลอกแล้ว')}catch(e){toast('คัดลอกไม่ได้ กรุณาเลือกข้อความแล้วคัดลอกเอง')}}};
+  if(S.newCode){cp('#ncCopyCode',S.newCode.code);cp('#ncCopyLink',S.newCode.link);const d=$('#ncDone');if(d)d.onclick=()=>{S.newCode=null;render()}}
+  document.querySelectorAll('[data-cdtoggle]').forEach(b=>b.onclick=async()=>{
+    const on=b.dataset.on==='1';b.disabled=true;
+    const {error}=await sb.from('class_codes').update({active:!on}).eq('id',b.dataset.cdtoggle);
+    if(error){toast('ทำรายการไม่ได้: '+(error.message||''));b.disabled=false;return}
+    toast(on?'ปิดรหัสแล้ว':'เปิดรหัสแล้ว');loadCodes()})
+}
 
 function stopSubs(){subsOff.forEach(f=>{try{f()}catch(e){}});subsOff=[]}
 async function handleSession(session){
+  if(codeCtx)return;
   const uid=(session&&session.user&&session.user.id)||null;
   if(uid===curUid)return; curUid=uid; stopSubs();
-  S.students={};S.shots={};S.actions={};S.sid='';S.draft=null;S.open=null;S.imp=null;S.me=null;
+  S.students={};S.shots={};S.actions={};S.sid='';S.draft=null;S.open=null;S.imp=null;S.me=null;S.codes=null;S.newCode=null;
   if(!uid){S.gate=loginGate();S.ready=true;render();return}
   S.gate=null;S.ready=false;render();
   const {data,error}=await sb.from('staff').select('role,display_name,active').eq('user_id',uid).maybeSingle();
@@ -737,8 +869,11 @@ async function handleSession(session){
 (async()=>{
   S.ready=false;render();
   if(!CFG.SUPABASE_URL||!CFG.SUPABASE_ANON_KEY||!window.supabase){S.gate=setupGate();S.ready=true;render();return}
+  let urlCode='';try{const m=location.hash.match(/[#&]c=([A-Za-z0-9]{6,16})/);if(m){urlCode=m[1];history.replaceState(null,'',location.pathname+location.search)}}catch(e){}
   sb=window.supabase.createClient(CFG.SUPABASE_URL,CFG.SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
   sb.auth.onAuthStateChange((evt,session)=>{handleSession(session)});
+  const savedCode=urlCode||sessGet('sk_code');
+  if(savedCode){const r=await enterCode(savedCode,true);if(!r)return;S.codeNote=r}
   const {data}=await sb.auth.getSession();handleSession(data.session);
 })();
 </script>
