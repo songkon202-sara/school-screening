@@ -173,7 +173,7 @@ function store(k,v){try{if(v===undefined)return localStorage.getItem(k);localSto
 
 const ROLES={officer:'เจ้าหน้าที่',teacher:'ครูประจำชั้น',parent:'ผู้ปกครอง (อสม.)'};
 const TABS={
- officer:[['summary','สรุปผลการดำเนินการ'],['students','นักเรียนและการติดตาม'],['codes','รหัสห้อง']],
+ officer:[['summary','สรุปผลการดำเนินการ'],['students','นักเรียนและการติดตาม'],['codes','รหัสห้อง'],['audit','Audit Log']],
  teacher:[['obs','แบบสังเกต 4 โรค'],['snapT','SNAP-IV (ครู)'],['summary','สรุปผล']],
  parent:[['obsP','แบบสังเกต 4 โรค'],['snapP','SNAP-IV (ไม่บังคับ)'],['summary','สรุปผล']]};
 const tabsOf=()=>TABS[S.role].filter(t=>!(codeCtx&&codeCtx.kind!=='teacher'&&t[0]==='summary'));
@@ -230,6 +230,7 @@ function render(){
   if(S.tab==='summary')a.innerHTML=viewSummary();
   else if(S.tab==='students')a.innerHTML=viewStudents();
   else if(S.tab==='codes'){a.innerHTML=viewCodes();bindCodes();return}
+  else if(S.tab==='audit'){a.innerHTML=viewAudit();bindAudit();return}
   else a.innerHTML=viewForm();
   if(isForm())bindForm();
   if(S.tab==='summary'||S.tab==='students')bindOfficer();
@@ -807,6 +808,40 @@ async function exitCode(note){
   S.students={};S.shots={};S.actions={};S.sid='';S.draft=null;S.school='';S.grade='';S.me=null;S.codeNote=note||'';
   const {data}=await sb.auth.getSession();handleSession(data.session)}
 
+/* ---------- เจ้าหน้าที่: Audit Log (ประวัติการใช้งาน อ่านอย่างเดียว) ---------- */
+S.audit=null;S.auditFilter={tbl:'',op:''};
+async function loadAudit(){
+  const [a,u]=await Promise.all([
+    sb.from('audit_log').select('id,at,user_id,tbl,row_id,op').order('at',{ascending:false}).limit(500),
+    sb.from('staff').select('user_id,display_name,role')]);
+  if(a.error){toast('โหลด Audit Log ไม่ได้: '+(a.error.message||''));S.audit=[]}else S.audit=a.data;
+  S.staffMap={};(u.data||[]).forEach(x=>{S.staffMap[x.user_id]=x.display_name||ROLES[x.role]||''});
+  if(S.tab==='audit')render()}
+const AUD_TBL={students:'นักเรียน',screenings:'แบบประเมิน',actions:'การติดตาม',class_code:'เข้าด้วยรหัสห้อง'};
+const AUD_OP={INSERT:'เพิ่ม',UPDATE:'แก้ไข',DELETE:'ลบ'};
+function audWho(r){return r.user_id?(S.staffMap&&S.staffMap[r.user_id])||'ผู้ใช้ '+String(r.user_id).slice(0,8):(r.tbl==='class_code'?'ผู้ใช้รหัสห้อง':'ระบบ')}
+function audWhat(r){
+  let op=AUD_OP[r.op]||'';let tgt='';
+  if(r.tbl==='class_code'){const m=/^SAVE ([0-9a-f-]{36})_(\w+)$/.exec(r.op);if(m){const st=S.students[m[1]];op='บันทึกแบบ '+m[2];tgt=st?st.name:''}else op=r.op}
+  else if(r.tbl==='screenings'){const sid=String(r.row_id).split('_')[0];const st=S.students[sid];tgt=(st?st.name:'')+' ('+(String(r.row_id).split('_')[1]||'')+')'}
+  else{const st=S.students[r.row_id];tgt=st?st.name:''}
+  return (op+' '+tgt).trim()}
+function viewAudit(){
+  if(S.audit===null){loadAudit();return '<div class="empty">กำลังโหลด…</div>'}
+  const f=S.auditFilter;
+  const rows=S.audit.filter(r=>(!f.tbl||r.tbl===f.tbl)&&(!f.op||(f.op==='SAVE'?r.op.startsWith('SAVE'):r.op===f.op)));
+  return `<div class="stack"><div class="card stack"><h2>Audit Log</h2>
+  <div class="note">บันทึกว่าใครทำอะไรเมื่อไร (เพิ่ม/แก้ไข/ลบ ข้อมูลนักเรียน แบบประเมิน การติดตาม และการบันทึกผ่านรหัสห้อง) อ่านได้อย่างเดียว แก้ไขหรือลบไม่ได้ ไม่เก็บเนื้อหาข้อมูลส่วนบุคคล แสดง 500 รายการล่าสุด</div>
+  <div class="row"><select id="auTbl"><option value="">ทุกประเภท</option>${Object.keys(AUD_TBL).map(k=>`<option value="${k}" ${f.tbl===k?'selected':''}>${AUD_TBL[k]}</option>`).join('')}</select>
+  <select id="auOp"><option value="">ทุกการกระทำ</option>${[['INSERT','เพิ่ม'],['UPDATE','แก้ไข'],['DELETE','ลบ'],['SAVE','บันทึกผ่านรหัสห้อง']].map(([k,v])=>`<option value="${k}" ${f.op===k?'selected':''}>${v}</option>`).join('')}</select>
+  <button class="btn sm" id="auRef">รีเฟรช</button></div>
+  <div class="note">แสดง ${rows.length} จาก ${S.audit.length} รายการ</div>
+  <div class="tblw"><table><thead><tr><th>เวลา</th><th>ผู้ทำ</th><th>ประเภท</th><th>รายการ</th></tr></thead><tbody>${rows.map(r=>`<tr><td class="nw">${new Date(r.at).toLocaleString('th-TH',{dateStyle:'short',timeStyle:'medium'})}</td><td>${esc(audWho(r))}</td><td>${esc(AUD_TBL[r.tbl]||r.tbl)}</td><td>${esc(audWhat(r))}</td></tr>`).join('')||'<tr><td colspan="4" class="empty">ไม่มีรายการ</td></tr>'}</tbody></table></div></div></div>`}
+function bindAudit(){
+  if(!$('#auTbl'))return;
+  $('#auTbl').onchange=e=>{S.auditFilter.tbl=e.target.value;render()};
+  $('#auOp').onchange=e=>{S.auditFilter.op=e.target.value;render()};
+  $('#auRef').onclick=()=>{S.audit=null;render()}}
 /* ---------- เจ้าหน้าที่: จัดการรหัสห้อง ---------- */
 const CODE_ALPHA='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // 32 ตัว ไม่มี I O 0 1 สับสนง่าย
 function genCode(){const b=new Uint8Array(10);crypto.getRandomValues(b);return Array.from(b,x=>CODE_ALPHA[x%32]).join('')}
@@ -846,7 +881,7 @@ function viewCodes(){
   h+=`<div class="card stack"><h2>รหัสที่สร้างไว้</h2><div class="tblw"><table><thead><tr><th>โรงเรียน / หมู่บ้าน</th><th>ชั้น</th><th>สำหรับ</th><th>หมดอายุ</th><th>ใช้ล่าสุด</th><th>สถานะ</th><th></th></tr></thead><tbody>
   ${(S.codes||[]).map(c=>{const exp=new Date(c.expires_at).getTime()<now;const st=!c.active?['ปิดแล้ว','p-mute']:exp?['หมดอายุ','p-mute']:['ใช้งานได้','p-ok'];const sc=scopeOf(c);
    return `<tr><td>${esc(sc[0])}</td><td>${esc(sc[1])}</td><td>${c.kind==='teacher'?'ครู':c.kind==='asm'?'อสม.':'ผู้ปกครอง'}</td><td class="nw">${new Date(c.expires_at).toLocaleDateString('th-TH')}</td><td class="nw">${c.last_used_at?new Date(c.last_used_at).toLocaleString('th-TH',{dateStyle:'short',timeStyle:'short'}):'-'}</td>
-   <td><span class="pill ${st[1]}">${st[0]}</span></td><td><button class="btn sm" data-cdtoggle="${c.id}" data-on="${c.active?1:0}">${c.active?'ปิดรหัส':'เปิดรหัส'}</button></td></tr>`}).join('')||'<tr><td colspan="7" class="muted">ยังไม่มีรหัส</td></tr>'}
+   <td><span class="pill ${st[1]}">${st[0]}</span></td><td><button class="btn sm" data-cdtoggle="${c.id}" data-on="${c.active?1:0}">${c.active?'ปิดรหัส':'เปิดรหัส'}</button> <button class="btn sm" data-cddel="${c.id}">ลบ</button></td></tr>`}).join('')||'<tr><td colspan="7" class="muted">ยังไม่มีรหัส</td></tr>'}
   </tbody></table></div></div></div>`;
   return h}
 function bindCodes(){
@@ -872,8 +907,16 @@ function bindCodes(){
     const on=b.dataset.on==='1';b.disabled=true;
     const {error}=await sb.from('class_codes').update({active:!on}).eq('id',b.dataset.cdtoggle);
     if(error){toast('ทำรายการไม่ได้: '+(error.message||''));b.disabled=false;return}
-    toast(on?'ปิดรหัสแล้ว':'เปิดรหัสแล้ว');loadCodes()})
+    toast(on?'ปิดรหัสแล้ว':'เปิดรหัสแล้ว');loadCodes()});
+  document.querySelectorAll('[data-cddel]').forEach(b=>b.onclick=async()=>{
+    const id=b.dataset.cddel;
+    if(codeDelArm!==id){codeDelArm=id;b.textContent='กดอีกครั้งเพื่อยืนยัน';setTimeout(()=>{if(codeDelArm===id){codeDelArm=null;if(S.tab==='codes')render()}},3000);return}
+    codeDelArm=null;b.disabled=true;
+    const {error}=await sb.from('class_codes').delete().eq('id',id);
+    if(error){toast('ลบไม่ได้: '+(error.message||''));b.disabled=false;return}
+    toast('ลบรหัสแล้ว');loadCodes()})
 }
+let codeDelArm=null;
 
 function stopSubs(){subsOff.forEach(f=>{try{f()}catch(e){}});subsOff=[]}
 async function handleSession(session){
