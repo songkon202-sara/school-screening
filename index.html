@@ -258,7 +258,7 @@ function store(k,v){try{if(v===undefined)return localStorage.getItem(k);localSto
 
 const ROLES={officer:'เจ้าหน้าที่',teacher:'ครูประจำชั้น',parent:'ผู้ปกครอง (อสม.)'};
 const TABS={
- officer:[['summary','สรุปผลการดำเนินการ'],['students','นักเรียนและการติดตาม'],['codes','รหัสห้อง'],['audit','Audit Log'],['qr','QR Code'],['users','ผู้ใช้งาน'],['preview','ทดลองใช้']],
+ officer:[['summary','สรุปผลการดำเนินการ'],['students','นักเรียนและการติดตาม'],['codes','รหัสห้อง'],['audit','Audit Log'],['users','ผู้ใช้งาน']],
  teacher:[['obs','แบบสังเกต 4 โรค'],['snapT','SNAP-IV (ครู)'],['summary','สรุปผล']],
  parent:[['obsP','แบบสังเกต 4 โรค'],['snapP','SNAP-IV (ไม่บังคับ)'],['summary','สรุปผล']]};
 const tabsOf=()=>TABS[S.role].filter(t=>!(codeCtx&&codeCtx.kind!=='teacher'&&t[0]==='summary'));
@@ -317,11 +317,17 @@ function render0(){
   if(S.dbErr){a.innerHTML='<div class="card empty">เปิดฐานข้อมูลไม่ได้ในมุมมองนี้ กรุณาเปิดผ่านบัญชีที่ลงชื่อเข้าใช้แล้ว</div>';return}
   if(S.tab==='summary')a.innerHTML=viewSummary();
   else if(S.tab==='students')a.innerHTML=viewStudents();
-  else if(S.tab==='codes'){a.innerHTML='<div class="stack">'+viewCodes()+'</div>';bindCodes();const pg=$('#pvGo');if(pg)pg.onclick=()=>{S.tab='preview';render()};return}
-  else if(S.tab==='preview'){a.innerHTML='<div class="stack">'+pvCard()+'</div>';bindPv();return}
+  else if(S.tab==='codes'){const qm=S.codeSub==='qr';
+    const seg=`<div class="row segs" style="margin-bottom:14px"><button class="btn ${qm?'':'pri'}" data-csub="one">🔑 สร้างรหัสรายห้อง/หมู่บ้าน</button><button class="btn ${qm?'pri':''}" data-csub="qr">📱 QR ทั้งโรงเรียน/หมู่บ้าน</button></div>`;
+    a.innerHTML=seg+(qm?viewQr():'<div class="stack">'+viewCodes()+'</div>');
+    if(qm)bindQr();else{bindCodes();const pg=$('#pvGo');if(pg)pg.onclick=()=>{S.tab='users';S.userSub='preview';render()}}
+    document.querySelectorAll('[data-csub]').forEach(b=>b.onclick=()=>{S.codeSub=b.dataset.csub;render()});return}
   else if(S.tab==='audit'){a.innerHTML=viewAudit();bindAudit();return}
-  else if(S.tab==='users'){a.innerHTML=viewUsers();bindUsers();return}
-  else if(S.tab==='qr'){a.innerHTML=viewQr();bindQr();return}
+  else if(S.tab==='users'){const pm=S.userSub==='preview';
+    const seg=`<div class="row segs" style="margin-bottom:14px"><button class="btn ${pm?'':'pri'}" data-usub="list">👥 รายชื่อผู้ใช้</button><button class="btn ${pm?'pri':''}" data-usub="preview">🔍 ทดลองใช้ (ดูหน้าจอครู/อสม.)</button></div>`;
+    a.innerHTML=seg+(pm?'<div class="stack">'+pvCard()+'</div>':viewUsers());
+    if(pm)bindPv();else bindUsers();
+    document.querySelectorAll('[data-usub]').forEach(b=>b.onclick=()=>{S.userSub=b.dataset.usub;render()});return}
   else a.innerHTML=viewForm();
   if(isForm())bindForm();
   if(S.tab==='summary'||S.tab==='students')bindOfficer();
@@ -919,7 +925,7 @@ async function exitCode(note){
 
 /* ---------- เจ้าหน้าที่: ทดลองดูหน้าเว็บในฐานะครู / อสม. (อ่านอย่างเดียว ไม่บันทึกข้อมูลจริง) ---------- */
 let pv=null; // {stash}
-S.pvKind='teacher';
+S.pvKind='teacher';S.codeSub='one';S.userSub='list';
 function pvCard(){
   const all=Object.keys(S.students).map(i=>S.students[i]);
   const schools=[...new Set(all.map(x=>x.school).filter(Boolean))].sort(natSort);
@@ -957,7 +963,7 @@ function startPreview(kind,school,village){
 async function exitPreview(){
   pv=null;codeCtx=null;curUid=undefined;
   S.students={};S.shots={};S.actions={};S.sid='';S.draft=null;S.school='';S.grade='';S.me=null;
-  const {data}=await sb.auth.getSession();await handleSession(data.session);S.tab='preview';render()}
+  const {data}=await sb.auth.getSession();await handleSession(data.session);S.tab='users';S.userSub='preview';render()}
 
 /* ---------- เจ้าหน้าที่: ผู้ใช้งาน (อนุมัติการเข้าถึงข้อมูล) ---------- */
 S.users=null;
@@ -1055,7 +1061,7 @@ function bindQr(){
   const rg=$('#qrRegen');if(rg)rg.onchange=()=>{S.qrRegen=rg.checked;allArm=false;render()};
   const ca=$('#cdAll');if(ca)ca.onclick=async()=>{
     const pl=batchPlan(S.qrRegen);if(!pl.items.length)return;
-    if(!allArm){allArm=true;ca.textContent='สร้าง '+pl.items.length+' รหัส? กดอีกครั้งเพื่อยืนยัน';setTimeout(()=>{if(allArm){allArm=false;if(S.tab==='qr')render()}},4000);return}
+    if(!allArm){allArm=true;ca.textContent='สร้าง '+pl.items.length+' รหัส? กดอีกครั้งเพื่อยืนยัน';setTimeout(()=>{if(allArm){allArm=false;if(S.tab==='codes'&&S.codeSub==='qr')render()}},4000);return}
     allArm=false;ca.disabled=true;
     const exp=expIso((qe&&qe.value)||S.qrExp||addDays(30));if(!exp){allArm=false;toast('วันหมดอายุต้องอยู่ระหว่างพรุ่งนี้ถึงไม่เกิน 1 ปี');if(S.tab==='qr')render();return}
     const made=[];for(const it of pl.items){const code=genCode();made.push({it,code,hash:await sha256hex(code)})}
@@ -1097,7 +1103,7 @@ let allArm=false;
 async function loadCodes(){
   const {data,error}=await sb.from('class_codes').select('id,label,school,grade,village,kind,expires_at,active,last_used_at,created_at').order('created_at',{ascending:false});
   if(error){toast('โหลดรายการรหัสไม่ได้: '+(error.message||''));S.codes=[]}else S.codes=data;
-  if(S.tab==='codes'||S.tab==='qr')render()}
+  if(S.tab==='codes')render()}
 function viewCodes(){
   if(S.codes===null){loadCodes();return '<div class="empty">กำลังโหลด…</div>'}
   const all=Object.keys(S.students).map(i=>S.students[i]);
