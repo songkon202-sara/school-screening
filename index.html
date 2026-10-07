@@ -18,7 +18,8 @@
 <style>
 /* Layout: sticky top bar (role switcher) + tab row, single centered column of work cards (max 1040px). */
 :root{
-  --bg:#f1f5f6; --surface:#ffffff; --ink:#15282f; --muted:#587078; --line:#d6e0e3;
+  --bg:#eef3f4; --surface:#ffffff; --ink:#14262d; --muted:#52696f; --line:#d3dee1;
+  --hd1:#0a5f61; --hd2:#13867f; --shadow:0 1px 2px rgba(16,40,46,.06),0 4px 14px rgba(16,40,46,.06);
   --accent:#0b7a75; --accent-ink:#ffffff; --accent-soft:#dcf0ee;
   --warn:#a9500a; --warn-soft:#fdeedb;
   --bad:#b0281d; --bad-soft:#fde6e3;
@@ -28,86 +29,153 @@
   --f-body:"Sarabun","Noto Sans Thai",system-ui,sans-serif;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#0e191d; --surface:#152327; --ink:#e5eef0; --muted:#94a9b0; --line:#294046;
+  --bg:#0e191d; --surface:#152327; --ink:#e5eef0; --muted:#9db2b9; --line:#294046;
+  --hd1:#0d3a3d; --hd2:#124c4c; --shadow:0 1px 2px rgba(0,0,0,.3);
   --accent:#43c4ba; --accent-ink:#06201e; --accent-soft:#12383a;
   --warn:#f0b15a; --warn-soft:#3a2a11;
   --bad:#ff9288; --bad-soft:#3e1b18;
   --ok:#64d89a; --ok-soft:#123323;
   --info:#8fb5ff; --info-soft:#172a4e; color-scheme:dark}}
 :root[data-theme="dark"]{
-  --bg:#0e191d; --surface:#152327; --ink:#e5eef0; --muted:#94a9b0; --line:#294046;
+  --bg:#0e191d; --surface:#152327; --ink:#e5eef0; --muted:#9db2b9; --line:#294046;
+  --hd1:#0d3a3d; --hd2:#124c4c; --shadow:0 1px 2px rgba(0,0,0,.3);
   --accent:#43c4ba; --accent-ink:#06201e; --accent-soft:#12383a;
   --warn:#f0b15a; --warn-soft:#3a2a11;
   --bad:#ff9288; --bad-soft:#3e1b18;
   --ok:#64d89a; --ok-soft:#123323;
   --info:#8fb5ff; --info-soft:#172a4e; color-scheme:dark}
 *{box-sizing:border-box}
-body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.55}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:17px;line-height:1.6;-webkit-text-size-adjust:100%}
 button,input,select,textarea{font:inherit;color:inherit}
 h1,h2,h3{font-family:var(--f-head);font-weight:600;margin:0;line-height:1.3;text-wrap:balance}
 .wrap{max-width:1040px;margin:0 auto;padding-inline:16px;padding-block:16px 48px}
-header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:linear-gradient(135deg,var(--hd1),var(--hd2));color:#fff;box-shadow:0 2px 10px rgba(8,50,52,.25)}
+header.top .btn{background:rgba(255,255,255,.14);color:#fff;border-color:rgba(255,255,255,.35)}
+header.top .btn:hover{background:rgba(255,255,255,.25)}
+header.top .note,header.top .brand small{color:rgba(255,255,255,.85)}
 .top-in{max-width:1040px;margin:0 auto;padding:10px 16px 0;display:flex;flex-direction:column;gap:10px}
 .brand{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;justify-content:space-between}
-.brand h1{font-size:18px}
+.brand h1{font-size:19px;letter-spacing:.2px}
 .brand small{color:var(--muted);font-size:13px}
 .userbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .roles{display:inline-flex;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px;flex-wrap:wrap}
 .roles button{border:0;background:transparent;padding:6px 14px;border-radius:8px;cursor:pointer;font-weight:500;color:var(--muted)}
 .roles button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
 nav.tabs{display:flex;gap:4px;overflow-x:auto}
-nav.tabs button{border:0;background:transparent;padding:8px 14px;cursor:pointer;color:var(--muted);font-weight:500;border-bottom:3px solid transparent;white-space:nowrap}
-nav.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+nav.tabs button{border:0;background:transparent;padding:10px 16px;cursor:pointer;color:rgba(255,255,255,.78);font-weight:500;border-bottom:3px solid transparent;white-space:nowrap;min-height:44px}
+nav.tabs button::before{content:attr(data-ic);margin-right:6px}
+nav.tabs button[aria-selected="true"]{color:#fff;font-weight:700;border-bottom-color:#fff}
 :focus-visible{outline:3px solid var(--info);outline-offset:2px}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:var(--shadow)}
+.card>h2{font-size:20px}
 .stack{display:flex;flex-direction:column;gap:16px}
 .row{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
 .row>*{min-width:0}
 label.f{display:flex;flex-direction:column;gap:4px;font-size:14px;color:var(--muted);flex:1 1 180px}
-input[type=text],input[type=password],input[type=number],input[type=date],select,textarea{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;color:var(--ink);width:100%}
+input[type=text],input[type=password],input[type=number],input[type=date],input[type=search],select,textarea{background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;min-height:46px;font-size:16px;color:var(--ink);width:100%}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 3px var(--accent-soft)}
 textarea{min-height:64px;resize:vertical}
-.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 16px;cursor:pointer;font-weight:600}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 18px;min-height:46px;cursor:pointer;font-weight:600;transition:transform .08s,box-shadow .15s}
+.btn:active{transform:scale(.97)}
+.btn.pri{box-shadow:0 2px 6px rgba(11,122,117,.35)}
 .btn.pri{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
-.btn.sm{padding:4px 10px;font-size:14px}
+.btn.sm{padding:6px 12px;min-height:38px;font-size:15px}
+.btn.block{width:100%}
+.btn.xl{min-height:54px;font-size:18px;border-radius:14px}
 .btn:disabled{opacity:.5;cursor:not-allowed}
 .muted{color:var(--muted)}
 .nw,td .btn{white-space:nowrap}
 @media (max-width:600px){header.top{position:static}.brand h1{font-size:16px}.roles button{padding:6px 10px;font-size:14px}.card{padding:14px}.kpi b{font-size:26px}}
-.pill{display:inline-block;padding:1px 10px;border-radius:99px;font-size:13px;font-weight:600;white-space:nowrap}
+.pill{display:inline-block;padding:2px 12px;border-radius:99px;font-size:14px;font-weight:600;white-space:nowrap}
 .p-bad{background:var(--bad-soft);color:var(--bad)}
 .p-warn{background:var(--warn-soft);color:var(--warn)}
 .p-ok{background:var(--ok-soft);color:var(--ok)}
 .p-info{background:var(--info-soft);color:var(--info)}
 .p-mute{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
-.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
-.kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px}
-.kpi b{display:block;font-family:var(--f-head);font-size:30px;line-height:1.1;font-variant-numeric:tabular-nums}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+.kpis.hero{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:var(--shadow);border-left:6px solid var(--line)}
+.kpi.k-ok{border-left-color:var(--ok)}.kpi.k-bad{border-left-color:var(--bad)}.kpi.k-info{border-left-color:var(--info)}.kpi.k-acc{border-left-color:var(--accent)}.kpi.k-warn{border-left-color:var(--warn)}
+.kpi small{display:block;color:var(--muted);font-size:13px}
+.kpi b{display:block;font-family:var(--f-head);font-size:34px;line-height:1.1;font-variant-numeric:tabular-nums}
 .kpi span{font-size:14px;color:var(--muted)}
 .tblw{overflow-x:auto}
 table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
 th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
-th{font-size:13px;color:var(--muted);font-weight:600;white-space:nowrap}
+th{font-size:14px;color:var(--muted);font-weight:600;white-space:nowrap}
+tbody tr:hover{background:var(--bg)}
 .bar{height:10px;background:var(--bg);border:1px solid var(--line);border-radius:6px;overflow:hidden;display:flex;min-width:120px}
 .bar i{display:block;height:100%}
-.sec{border:1px solid var(--line);border-radius:10px;overflow:hidden}
-.sec>h3{padding:10px 14px;background:var(--bg);font-size:16px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center}
-.q{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;justify-content:space-between;padding:10px 14px;border-top:1px solid var(--line)}
+.sec{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--surface);box-shadow:var(--shadow)}
+.sec>summary,.sec>h3{padding:14px 16px;background:var(--bg);font-size:17px;font-family:var(--f-head);font-weight:600;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center;cursor:pointer;list-style:none;min-height:52px}
+.sec>summary::-webkit-details-marker{display:none}
+.sec>summary::before{content:'▸';margin-right:8px;transition:transform .15s;color:var(--accent)}
+.sec[open]>summary::before{transform:rotate(90deg)}
+.sec>summary>span:first-child{flex:1}
+.q{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between;padding:12px 16px;border-top:1px solid var(--line)}
 .q .t{flex:1 1 300px;min-width:0}
 .q .t em{font-style:normal;color:var(--muted);margin-right:6px;font-variant-numeric:tabular-nums}
 .opts{display:flex;gap:6px;flex-wrap:wrap}
 .opts label{position:relative;cursor:pointer}
 .opts input{position:absolute;opacity:0;inset:0}
-.opts span{display:block;padding:4px 12px;border:1px solid var(--line);border-radius:8px;font-size:14px;background:var(--bg);user-select:none}
+.opts span{display:flex;align-items:center;justify-content:center;min-width:64px;min-height:44px;padding:6px 16px;border:1.5px solid var(--line);border-radius:12px;font-size:16px;background:var(--bg);user-select:none;transition:background .1s}
 .opts input:checked+span{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
 .opts input:focus-visible+span{outline:3px solid var(--info);outline-offset:2px}
-.res{border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.res{border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
 .res.bad{background:var(--bad-soft)}.res.ok{background:var(--ok-soft)}.res.warn{background:var(--warn-soft)}
-.empty{text-align:center;padding:28px 16px;color:var(--muted)}
-.note{font-size:14px;color:var(--muted)}
+.empty{text-align:center;padding:32px 16px;color:var(--muted)}
+.note{font-size:15px;color:var(--muted)}
 .flagrow{display:flex;gap:4px;flex-wrap:wrap}
 .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:10px;z-index:9;font-weight:600}
 @media (prefers-reduced-motion:no-preference){.card,.kpi{transition:border-color .15s}}
+/* ---- ตัวเลือกนักเรียนแบบการ์ด + แถบความคืบหน้า ---- */
+.prog{display:flex;flex-direction:column;gap:6px}
+.prog .bar{height:12px}
+.stlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;max-height:min(60vh,520px);overflow:auto;padding:2px}
+.stbtn{display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:left;border:1.5px solid var(--line);background:var(--surface);border-radius:14px;padding:12px 14px;min-height:60px;cursor:pointer;box-shadow:var(--shadow)}
+.stbtn:hover{border-color:var(--accent)}
+.stbtn b{display:block;font-weight:600}.stbtn small{color:var(--muted)}
+.stbtn.done{background:var(--ok-soft);border-color:transparent}
+.cur{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.pbar{position:sticky;top:var(--hh,0px);z-index:4;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 14px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:6px}
+.pbar .row{gap:6px;align-items:center}
+.savebar{position:sticky;bottom:calc(8px + env(safe-area-inset-bottom,0px));z-index:4;display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:10px 14px;box-shadow:0 6px 24px rgba(10,40,44,.22)}
+.savebar .btn{flex:1 1 220px}
+.gatehero{max-width:480px;margin:20px auto}
+.gatehero .codein{font-size:26px;text-align:center;letter-spacing:6px;font-weight:700;min-height:62px;text-transform:uppercase}
+.gatehero .logo{font-size:44px;text-align:center;line-height:1}
+.stackbar{display:flex;height:14px;border-radius:8px;overflow:hidden;background:var(--bg);border:1px solid var(--line);min-width:140px}
+.stackbar i{display:block;height:100%}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:14px;color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:4px;margin-right:5px;vertical-align:-1px}
+details.more>summary{cursor:pointer;color:var(--accent);font-weight:600;list-style:none;min-height:44px;display:flex;align-items:center}
+details.more>summary::-webkit-details-marker{display:none}
+details.more>summary::before{content:'ⓘ';margin-right:8px}
+/* ---- มือถือ: เมนูล่างจอ + ตารางเป็นการ์ด ---- */
+@media (max-width:700px){
+  body{padding-bottom:calc(72px + env(safe-area-inset-bottom,0px))}
+  header.top{position:static}
+  nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:8;background:var(--surface);border-top:1px solid var(--line);box-shadow:0 -4px 18px rgba(10,40,44,.14);padding:4px 4px calc(4px + env(safe-area-inset-bottom,0px));gap:2px;justify-content:space-around;overflow:hidden}
+  header.top .top-in{padding-bottom:12px}
+  nav.tabs button{flex:1 1 0;display:flex;flex-direction:column;align-items:center;gap:0;padding:6px 2px;border-radius:12px;border-bottom:0;white-space:normal;text-align:center;font-size:12.5px;line-height:1.25;color:var(--muted);min-height:56px;justify-content:center}
+  nav.tabs button::before{margin:0 0 2px;font-size:22px;line-height:1}
+  nav.tabs button[aria-selected="true"]{background:var(--accent-soft);color:var(--accent);border-bottom:0}
+  .savebar{bottom:calc(68px + env(safe-area-inset-bottom,0px))}
+  .toast{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+  .q{flex-direction:column;align-items:stretch}.q .opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr))}
+  .opts span{min-width:0;padding:6px 8px}
+  .stlist{grid-template-columns:1fr}
+  table.rt thead{display:none}
+  table.rt,table.rt tbody{display:block}
+  table.rt tr{display:block;border:1px solid var(--line);border-radius:14px;margin-bottom:10px;padding:6px 4px;background:var(--surface);box-shadow:var(--shadow)}
+  table.rt td{display:flex;justify-content:space-between;align-items:center;gap:12px;border:0;padding:5px 10px;text-align:right}
+  table.rt td::before{content:attr(data-l);color:var(--muted);font-size:14px;text-align:left;flex:none}
+  table.rt td[data-l=""]::before{display:none}
+  table.rt td[data-l=""]{justify-content:flex-end}
+  .nw,td .btn{white-space:normal}
+  .card{padding:16px}
+}
 </style>
 
 <header class="top"><div class="top-in">
@@ -206,12 +274,13 @@ const STAGE={none:['ยังไม่คัดกรอง','p-mute'],normal:['
 const ASTAT={pending:'รอดำเนินการ',screened:'คัดกรองขั้นต่อไปแล้ว',referred:'ส่งต่อแพทย์/สถานพยาบาลแล้ว',follow:'ติดตามต่อเนื่อง / ปิดเคส'};
 
 /* ---------- shell ---------- */
+const TAB_IC={summary:'📊',students:'👧',codes:'🔑',audit:'📜',obs:'📝',obsP:'📝',snapT:'📋',snapP:'📋'};
 function renderShell(){
   const rb=$('#roles');rb.className='userbar';
-  rb.innerHTML=S.me?`<span class="note"><b>${esc(S.me.label||S.me.name)}</b> · ${ROLES[S.role]}</span>${S.role==='officer'?'<button class="btn sm" data-setpw="1">ตั้งรหัสผ่าน</button>':''}<button class="btn sm" data-logout="1">${pv?'ออกจากโหมดนี้':'ออกจากระบบ'}</button>`:'';
+  rb.innerHTML=S.me?`<span class="note"><b>${esc(S.me.label||S.me.name)}</b>${S.me.label?'':' · '+ROLES[S.role]}</span>${S.role==='officer'?'<button class="btn sm" data-setpw="1">ตั้งรหัสผ่าน</button>':''}<button class="btn sm" data-logout="1">${pv?'ออกจากโหมดนี้':'ออกจากระบบ'}</button>`:'';
   if(!S.me){$('#tabs').innerHTML='';return}
   if(!tabsOf().some(t=>t[0]===S.tab))S.tab=tabsOf()[0][0];
-  $('#tabs').innerHTML=tabsOf().map(([k,v])=>`<button role="tab" data-tab="${k}" aria-selected="${S.tab===k}">${v}</button>`).join('');
+  $('#tabs').innerHTML=tabsOf().map(([k,v])=>`<button role="tab" data-tab="${k}" data-ic="${TAB_IC[k]||'•'}" aria-selected="${S.tab===k}">${v}</button>`).join('');
 }
 document.addEventListener('click',e=>{
   const r=e.target.closest('[data-role]');
@@ -221,7 +290,9 @@ document.addEventListener('click',e=>{
 });
 
 function isForm(){return ['obs','obsP','snapT','snapP'].includes(S.tab)}
-function render(){
+function respTables(){const hd=document.querySelector('header.top');document.documentElement.style.setProperty('--hh',(hd&&!matchMedia('(max-width:700px)').matches?hd.offsetHeight+8:0)+'px');document.querySelectorAll('table').forEach(t=>{t.classList.add('rt');const hs=[...t.querySelectorAll('thead th')].map(x=>x.textContent.trim());t.querySelectorAll('tbody tr').forEach(tr=>[...tr.children].forEach((td,i)=>{if(td.tagName==='TD'&&!td.hasAttribute('data-l'))td.setAttribute('data-l',td.colSpan>1?'':(hs[i]||''))}))})}
+function render(){render0();respTables()}
+function render0(){
   renderShell();
   const a=$('#app');
   if(S.gate){a.innerHTML=S.gate;bindGate();return}
@@ -277,13 +348,17 @@ function viewSummary(){
   <div class="card row" style="align-items:flex-end"><label class="f" style="flex-basis:220px">โรงเรียน<select id="fSchool"><option value="">ทุกโรงเรียน</option>${st.schoolOpts.map(g=>`<option ${f.school===g?'selected':''}>${esc(g)}</option>`).join('')}</select></label>
    <label class="f" style="flex-basis:150px">ชั้นเรียน<select id="fGrade"><option value="">ทุกชั้น</option>${st.gradeOpts.map(g=>`<option ${f.grade===g?'selected':''}>${esc(g)}</option>`).join('')}</select></label>
    <div class="note" style="flex:1 1 200px">กำลังแสดง ${st.n} จาก ${st.total} คน${f.school||f.grade?' ตามตัวกรอง':''}</div></div>
+  <div class="kpis hero">
+   <div class="kpi k-ok"><b>${st.n-st.by.none}</b><span>คัดกรองแล้ว</span><small>${pct(st.n-st.by.none,st.n)}% ของ ${st.n} คน</small></div>
+   <div class="kpi k-bad"><b>${found}</b><span>พบแนวโน้มอย่างน้อย 1 ภาวะ</span><small>${pct(found,st.n-st.by.none)}% ของที่คัดกรองแล้ว</small></div>
+   <div class="kpi k-warn"><b>${st.by.pending}</b><span>รอดำเนินการ</span><small>ต้องส่งต่อ/ติดตาม</small></div>
+   <div class="kpi k-info"><b>${st.by.done}</b><span>ดำเนินการแล้ว</span><small>${pct(st.by.done,found)}% ของที่พบ</small></div>
+  </div>
   <div class="kpis">
    <div class="kpi"><b>${st.n}</b><span>นักเรียนในระบบ</span></div>
    <div class="kpi"><b>${st.obsN}</b><span>ทำแบบสังเกต 4 โรคแล้ว (${pct(st.obsN,st.n)}%)</span></div>
    <div class="kpi"><b>${st.snapN}</b><span>ทำ SNAP-IV แล้ว (${pct(st.snapN,st.n)}%)</span></div>
-   <div class="kpi" style="${st.needSnap?'border-color:var(--warn)':''}"><b>${st.needSnap}</b><span>สงสัยสมาธิสั้น รอครูทำ SNAP-IV</span></div>
-   <div class="kpi"><b>${found}</b><span>พบแนวโน้มอย่างน้อย 1 ภาวะ</span></div>
-   <div class="kpi"><b>${st.by.done}</b><span>ดำเนินการครบแล้ว (${pct(st.by.done,found)}% ของที่พบ)</span></div>
+   <div class="kpi" style="${st.needSnap?'border-left-color:var(--warn)':''}"><b>${st.needSnap}</b><span>สงสัยสมาธิสั้น รอครูทำ SNAP-IV</span></div>
   </div>
   <div class="card stack"><h2>สถานะนักเรียนทั้งหมด</h2>
    <div class="bar" style="height:18px">${[['none','var(--line)'],['normal','var(--ok)'],['pending','var(--bad)'],['done','var(--info)']].map(([k,c])=>`<i style="width:${pct(st.by[k],st.n)}%;background:${c}"></i>`).join('')}</div>
@@ -297,9 +372,10 @@ function viewSummary(){
    <div class="note">นับเป็น “พบแนวโน้ม” เมื่อแบบสังเกตได้ 6 คะแนนขึ้นไปในหมวดนั้น หรือคะแนน SNAP-IV ถึงจุดตัด (สมาธิสั้นนับจากแบบสังเกตหมวด 3 หรือ SNAP-IV ด้านขาดสมาธิ/อยู่ไม่นิ่ง)</div>
   </div>
   <div class="card stack"><h2>แยกตามโรงเรียน</h2>
-   <div class="tblw"><table><thead><tr><th>โรงเรียน</th><th>นักเรียน</th><th>คัดกรองแล้ว</th><th>พบแนวโน้ม</th><th>รอดำเนินการ</th><th>ดำเนินการแล้ว</th></tr></thead><tbody>
-   ${Object.keys(st.schools).sort(natSort).map(k=>{const o=st.schools[k];return `<tr><td>${esc(k)}</td><td>${o.n}</td><td>${o.scr}</td><td>${o.found}</td><td>${o.pend}</td><td>${o.done}</td></tr>`}).join('')}
-   </tbody></table></div></div>
+   <div class="tblw"><table><thead><tr><th>โรงเรียน</th><th>นักเรียน</th><th>คัดกรองแล้ว</th><th>พบแนวโน้ม</th><th>รอดำเนินการ</th><th>ดำเนินการแล้ว</th><th>ภาพรวม</th></tr></thead><tbody>
+   ${Object.keys(st.schools).sort(natSort).map(k=>{const o=st.schools[k];return `<tr><td>${esc(k)}</td><td>${o.n}</td><td>${o.scr}</td><td>${o.found}</td><td>${o.pend}</td><td>${o.done}</td><td><div class="stackbar" title="ดำเนินการแล้ว ${o.done} · รอดำเนินการ ${o.pend} · ไม่พบแนวโน้ม ${o.scr-o.found} · ยังไม่คัดกรอง ${o.n-o.scr}">${[[o.done,'var(--info)'],[o.pend,'var(--bad)'],[o.scr-o.found,'var(--ok)'],[o.n-o.scr,'var(--line)']].map(([v,c])=>`<i style="width:${pct(v,o.n)}%;background:${c}"></i>`).join('')}</div></td></tr>`}).join('')}
+   </tbody></table></div>
+   <div class="legend"><span><i style="background:var(--info)"></i>ดำเนินการแล้ว</span><span><i style="background:var(--bad)"></i>รอดำเนินการ</span><span><i style="background:var(--ok)"></i>ไม่พบแนวโน้ม</span><span><i style="background:var(--line)"></i>ยังไม่คัดกรอง</span></div></div>
   <div class="card stack"><h2>แยกตามชั้นเรียน${f.school?' · '+esc(f.school):''}</h2>
    <div class="tblw"><table><thead><tr>${f.school?'':'<th>โรงเรียน</th>'}<th>ชั้น</th><th>นักเรียน</th><th>คัดกรองแล้ว</th><th>พบแนวโน้ม</th><th>รอดำเนินการ</th><th>ดำเนินการแล้ว</th></tr></thead><tbody>
    ${Object.keys(st.classes).sort(natSort).map(k=>{const [sc,gr]=k.split('\u0001');const o=st.classes[k];return `<tr>${f.school?'':`<td>${esc(sc)}</td>`}<td>${esc(gr)}</td><td>${o.n}</td><td>${o.scr}</td><td>${o.found}</td><td>${o.pend}</td><td>${o.done}</td></tr>`}).join('')}
@@ -535,16 +611,20 @@ function viewForm(){
   const schools=[...new Set(ids.map(i=>S.students[i].school||'').filter(Boolean))].sort(natSort);
   const grades=[...new Set(ids.filter(i=>!S.school||S.students[i].school===S.school).map(i=>S.students[i].grade||'').filter(Boolean))].sort(natSort);
   const list=ids.filter(i=>(!S.school||S.students[i].school===S.school)&&(!S.grade||S.students[i].grade===S.grade)&&(!(S.tab==='snapT'&&S.onlyNeed)||derive(i).needSnap));
+  const doneN=list.filter(i=>S.shots[i+'_'+S.tab]).length;
   const title={obs:'แบบสังเกตพฤติกรรม 4 โรค (ครูประจำชั้น)',obsP:'แบบสังเกตพฤติกรรม 4 โรค (ผู้ปกครอง/อสม.)',snapT:'แบบประเมินพฤติกรรม SNAP-IV (Short Form) สำหรับครูประจำชั้น',snapP:'แบบประเมินพฤติกรรม SNAP-IV (Short Form) สำหรับผู้ปกครอง'}[S.tab];
   let h=`<div class="stack"><div class="card stack"><h2>${title}</h2>
   <div class="note">${S.tab==='obs'?'ตอบโดยครูประจำชั้นที่อยู่ใกล้ชิดเด็กไม่น้อยกว่า 2 เดือน ตอบให้ครบ 40 ข้อ เพราะเด็ก 1 คนอาจมีหลายภาวะร่วมกัน':S.tab==='obsP'?'ตอบโดยผู้ปกครองหรือ อสม. ที่ใกล้ชิดเด็ก ใช้แบบเดียวกับครู ตอบให้ครบ 40 ข้อ เพราะเด็ก 1 คนอาจมีหลายภาวะร่วมกัน':S.tab==='snapT'?'ทำเมื่อแบบสังเกตพบแนวโน้มสมาธิสั้น (หมวด 3 ตั้งแต่ 6 คะแนน) ทำเครื่องหมายว่าอาการแต่ละข้อตรงกับลักษณะของเด็กเพียงใด ครบ 26 ข้อ':'ทำเครื่องหมายว่าอาการแต่ละข้อตรงกับลักษณะของเด็กเพียงใด ครบ 26 ข้อ (ไม่บังคับ)'}</div>
-  <div class="row"><label class="f" style="flex-basis:200px;flex-grow:0">โรงเรียน<select id="scSel"><option value="">ทุกโรงเรียน</option>${schools.map(g=>`<option ${S.school===g?'selected':''}>${esc(g)}</option>`).join('')}</select></label>
-  <label class="f" style="flex-basis:130px;flex-grow:0">ชั้น<select id="gSel"><option value="">ทุกชั้น</option>${grades.map(g=>`<option ${S.grade===g?'selected':''}>${esc(g)}</option>`).join('')}</select></label>
-  <label class="f" style="flex-basis:260px">นักเรียน<select id="sSel"><option value="">— เลือกนักเรียน —</option>${list.map(i=>`<option value="${i}" ${S.sid===i?'selected':''}>${esc(S.students[i].name)}${S.students[i].grade?' ('+esc(S.students[i].grade)+')':''}${!S.school&&S.students[i].school?' – '+esc(S.students[i].school):''}${S.shots[i+'_'+S.tab]?' ✓':''}${S.tab==='snapT'&&derive(i).needSnap?' ⚑ ต้องทำ':''}</option>`).join('')}</select></label></div>
+  <div class="prog"><div class="row" style="justify-content:space-between;align-items:baseline"><b>กรอกแล้ว ${doneN}/${list.length} คน</b><span class="note">${pct(doneN,list.length)}%</span></div><div class="bar"><i style="width:${pct(doneN,list.length)}%;background:var(--ok)"></i></div></div>
+  ${(schools.length>1||grades.length>1)?`<div class="row">${schools.length>1?`<label class="f" style="flex-basis:200px">โรงเรียน<select id="scSel"><option value="">ทุกโรงเรียน</option>${schools.map(g=>`<option ${S.school===g?'selected':''}>${esc(g)}</option>`).join('')}</select></label>`:''}
+  ${grades.length>1?`<label class="f" style="flex-basis:150px">ชั้น<select id="gSel"><option value="">ทุกชั้น</option>${grades.map(g=>`<option ${S.grade===g?'selected':''}>${esc(g)}</option>`).join('')}</select></label>`:''}</div>`:''}
+  ${S.sid&&S.students[S.sid]?`<div class="cur"><div><div class="note">กำลังกรอกให้</div><b style="font-size:19px">${esc(S.students[S.sid].name)}</b> <span class="muted">${esc(S.students[S.sid].grade||'')}</span></div><button class="btn" data-clr="1">⇦ เลือกเด็กคนอื่น</button></div>`
+  :`<input type="search" id="stQ" aria-label="ค้นหานักเรียน" placeholder="🔍 ค้นหาชื่อนักเรียน" value="${esc(S.q||'')}" autocomplete="off">
+  <div class="stlist">${list.map(i=>{const dn=!!S.shots[i+'_'+S.tab],st=S.students[i];return `<button class="stbtn ${dn?'done':''}" data-sid="${i}"><span><b>${esc(st.name)}</b><small>${esc(st.grade||'')}${!S.school&&st.school?' · '+esc(st.school):''}${S.tab==='snapT'&&derive(i).needSnap?' · ⚑ ต้องทำ SNAP-IV':''}</small></span><span class="pill ${dn?'p-ok':'p-mute'}">${dn?'✓ กรอกแล้ว':'ยังไม่กรอก'}</span></button>`}).join('')||(ids.length?'<div class="empty">ไม่พบรายชื่อ</div>':'<div class="empty">ยังไม่มีรายชื่อนักเรียน '+(S.role==='parent'?'กรุณาแจ้งเจ้าหน้าที่หรือครูประจำชั้น':'เพิ่มรายชื่อนักเรียนก่อน')+'</div>')}</div>`}
   ${S.tab==='snapT'?`<label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="onlyNeed" ${S.onlyNeed?'checked':''}> แสดงเฉพาะนักเรียนที่ต้องทำ SNAP-IV (${ids.filter(i=>derive(i).needSnap).length} คน)</label>`:''}
   ${S.role!=='parent'&&!codeCtx?'<details id="addBox"><summary class="btn sm" style="display:inline-block">+ เพิ่มนักเรียนใหม่</summary><div style="margin-top:12px">'+studentForm().replace('class="card stack"','class="stack"').replace('<h2>เพิ่มนักเรียน</h2>','')+'</div></details>':''}
   </div>`;
-  if(!S.sid){return h+`<div class="card empty">${ids.length?'เลือกนักเรียนเพื่อเริ่มกรอกแบบประเมิน':'ยังไม่มีรายชื่อนักเรียน '+(S.role==='parent'?'กรุณาแจ้งเจ้าหน้าที่หรือครูประจำชั้น':'เพิ่มรายชื่อนักเรียนด้านบนก่อน')}</div></div>`}
+  if(!S.sid){return h+'</div>'}
   if(!S.draft)loadDraft();
   const D=S.draft,stu=S.students[S.sid];
   if(S.tab==='snapT'){const dv=derive(S.sid);h+=dv.needSnap?'<div class="res bad"><b>สงสัยสมาธิสั้น ครูต้องทำ SNAP-IV</b><div>ผลแบบสังเกต 4 โรค หมวดสมาธิสั้นถึง 6 คะแนน ('+esc(dv.src.adhd.filter(x=>x.startsWith("แบบสังเกต")).join(", "))+')</div></div>':dv.obsT||dv.obsP?'<div class="res ok"><b>แบบสังเกตยังไม่พบแนวโน้มสมาธิสั้น</b><div>ยังไม่จำเป็นต้องทำ SNAP-IV แต่ทำเพิ่มได้ถ้าครูสงสัย</div></div>':'<div class="res warn"><b>ยังไม่มีแบบสังเกต 4 โรคของเด็กคนนี้</b><div>ควรทำแบบสังเกตก่อน แล้วจึงทำ SNAP-IV ถ้าพบแนวโน้มสมาธิสั้น</div></div>'}
@@ -553,19 +633,22 @@ function viewForm(){
   ${(S.tab==='snapP'||S.tab==='obsP')?`<label class="f" style="flex-basis:150px;flex-grow:0">เป็น<select id="rel"><option ${D.rel==='ผู้ปกครอง'?'selected':''}>ผู้ปกครอง</option><option ${D.rel==='อสม.'?'selected':''}>อสม.</option></select></label>`:''}
   <label class="f" style="flex-basis:160px;flex-grow:0">วันที่ประเมิน<input type="date" id="dt" value="${esc(D.date)}"></label>
   ${S.tab==='snapT'?`<label class="f" style="flex-basis:110px;flex-grow:0">เกรดเฉลี่ย<input type="text" id="avg" value="${esc(D.avg)}"></label>`:''}</div></div>`;
+  h+=`<div class="pbar"><div class="row" style="justify-content:space-between;align-items:baseline"><b id="pbTxt"></b><span class="note" id="pbSub"></span></div><div class="bar"><i id="pbFill" style="width:0;background:var(--accent)"></i></div><div class="row" id="pbPills"></div></div>`;
   if(isObsTab(S.tab)){
-    OBS.forEach((s,si)=>{h+=`<div class="sec"><h3><span>${s.title}</span><span class="pill p-mute" id="sc_${s.key}"></span></h3>`;
+    let fo=OBS.findIndex((s,si)=>D.answers.slice(si*10,si*10+10).some(v=>v===null));if(fo<0)fo=0;
+    OBS.forEach((s,si)=>{h+=`<details class="sec" ${si===fo?'open':''}><summary><span>${s.title}</span><span class="pill p-mute" id="sc_${s.key}"></span></summary>`;
       s.items.forEach((t,k)=>{const n=si*10+k;h+=`<div class="q"><div class="t"><em>${s.from+k}.</em>${esc(t)}</div><div class="opts">
        <label><input type="radio" name="q${n}" value="1" ${D.answers[n]===1?'checked':''}><span>ใช่</span></label>
-       <label><input type="radio" name="q${n}" value="0" ${D.answers[n]===0?'checked':''}><span>ไม่ใช่</span></label></div></div>`});h+='</div>'});
+       <label><input type="radio" name="q${n}" value="0" ${D.answers[n]===0?'checked':''}><span>ไม่ใช่</span></label></div></div>`});h+='</details>'});
   }else{
     let off=0;const who=S.tab==='snapT'?'T':'P';
-    SNAP.forEach(s=>{h+=`<div class="sec"><h3><span>${s.title}</span><span class="pill p-mute" id="sc_${s.key}"></span></h3>`;
+    let so=0,fo=-1;SNAP.forEach((s,si)=>{if(fo<0&&D.answers.slice(so,so+s.items.length).some(v=>v===null))fo=si;so+=s.items.length});if(fo<0)fo=0;
+    SNAP.forEach((s,si)=>{h+=`<details class="sec" ${si===fo?'open':''}><summary><span>${s.title}</span><span class="pill p-mute" id="sc_${s.key}"></span></summary>`;
       s.items.forEach((t,k)=>{const n=off+k;h+=`<div class="q"><div class="t"><em>${n+1}.</em>${esc(t)}</div><div class="opts">${SNAP_OPTS.map((o,v)=>`<label><input type="radio" name="q${n}" value="${v}" ${D.answers[n]===v?'checked':''}><span>${o}</span></label>`).join('')}</div></div>`});
-      off+=s.items.length;h+='</div>'});
+      off+=s.items.length;h+='</details>'});
   }
-  h+=`<div class="card stack"><div id="result"></div><div class="row"><button class="btn pri" id="saveForm" ${S.canWrite===false?'disabled':''}>บันทึกผลการคัดกรอง</button>
-  ${S.shots[formDocId()]?'<span class="note">เคยบันทึกแล้ว การบันทึกใหม่จะแทนที่ผลเดิม</span>':''}${S.canWrite===false?'<span class="note">บัญชีนี้ไม่มีสิทธิ์บันทึก</span>':''}</div></div></div>`;
+  h+=`<div class="card stack"><div id="result"></div></div><div class="savebar"><button class="btn pri xl" id="saveForm" ${S.canWrite===false?'disabled':''}>💾 บันทึกผลการคัดกรอง</button>
+  ${S.shots[formDocId()]?'<span class="note">เคยบันทึกแล้ว การบันทึกใหม่จะแทนที่ผลเดิม</span>':''}${S.canWrite===false?'<span class="note">บัญชีนี้ไม่มีสิทธิ์บันทึก</span>':''}</div></div>`;
   return h;
 }
 function liveResult(){
@@ -585,13 +668,17 @@ function liveResult(){
     html=fl.length?`<div class="res bad"><b>คะแนนถึงจุดตัด ${fl.length} ด้าน</b>${fl.map(s=>`<div>• ${s.title}: ${r.scores[s.key]} คะแนน (จุดตัด ≥${s.cut[who]})</div>`).join('')}</div>`
       :`<div class="res ok"><b>ทุกด้านต่ำกว่าจุดตัด</b></div>`;
   }
+  const pbT=$('#pbTxt');if(pbT){pbT.textContent='ตอบแล้ว '+done+'/'+total+' ข้อ';$('#pbSub').textContent=done<total?'ข้อที่ไม่ตอบนับเป็น 0':'ครบทุกข้อ ✓';$('#pbFill').style.width=pct(done,total)+'%';
+    const L=isObsTab(S.tab)?OBS:SNAP;$('#pbPills').innerHTML=L.map(x=>`<span class="pill ${r.flags[x.key]?'p-bad':'p-mute'}">${isObsTab(S.tab)?COND[x.key]:x.title.replace('อาการ','')}: ${r.scores[x.key]}</span>`).join('')}
   box.innerHTML=`<div class="note">ตอบแล้ว ${done}/${total} ข้อ${done<total?' (ข้อที่ไม่ตอบนับเป็น 0 คะแนน)':''}</div>`+html;
 }
 function bindForm(){
   const on=$('#onlyNeed');if(on)on.onchange=()=>{S.onlyNeed=on.checked;S.sid='';S.draft=null;render()};
   const sc=$('#scSel');if(sc)sc.onchange=()=>{S.school=sc.value;S.grade='';S.sid='';S.draft=null;render()};
   const g=$('#gSel');if(g)g.onchange=()=>{S.grade=g.value;S.sid='';S.draft=null;render()};
-  const s=$('#sSel');if(s)s.onchange=()=>{S.sid=s.value;S.draft=null;render()};
+  document.querySelectorAll('[data-sid]').forEach(b=>b.onclick=()=>{S.sid=b.dataset.sid;S.draft=null;render();window.scrollTo(0,0)});
+  const cl=document.querySelector('[data-clr]');if(cl)cl.onclick=()=>{S.sid='';S.draft=null;render();window.scrollTo(0,0)};
+  const q=$('#stQ');if(q){const ap=()=>{S.q=q.value;const t=q.value.trim().toLowerCase();document.querySelectorAll('[data-sid]').forEach(b=>b.hidden=!!t&&!b.textContent.toLowerCase().includes(t))};q.oninput=ap;ap()}
   const b=$('#addStu');if(b)b.onclick=addStudent;
   bindImport();
   if(!S.sid)return;
@@ -606,7 +693,7 @@ async function saveForm(){
   const who=S.tab==='snapT'?'T':'P';
   const r=isObsTab(S.tab)?scoreObs(D.answers):scoreSnap(D.answers,who);
   const doc={studentId:S.sid,type:S.tab,answers:D.answers,respondent:D.respondent.trim(),rel:D.rel||'',date:D.date,avg:D.avg||'',scores:r.scores,flags:r.flags,updatedAt:Date.now()};
-  try{await db.doc('screenings/'+formDocId()).set(doc);toast('บันทึกผลการคัดกรองแล้ว')}
+  try{await db.doc('screenings/'+formDocId()).set(doc);toast('บันทึกแล้ว ✓ เลือกเด็กคนถัดไปได้เลย');S.sid='';S.draft=null;render();window.scrollTo(0,0)}
   catch(e){toast('บันทึกไม่ได้: '+(e.code||'ไม่ทราบสาเหตุ'))}
 }
 
@@ -674,12 +761,13 @@ dl={save:async({filename,data})=>{
   setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},800);return {status:'saved'}}};
 
 function gateCard(inner){return `<div class="card stack" style="max-width:520px;margin:24px auto">${inner}</div>`}
-function loginGate(){return gateCard(`<h2>เข้าด้วยรหัส (ครู / อสม.)</h2>
-  <div class="note">สำหรับครูและ อสม. ใส่รหัสที่เจ้าหน้าที่แจกให้ ไม่ต้องสมัครสมาชิกและไม่ต้องใช้อีเมล</div>
-  <label class="f" style="flex:none">รหัส<input type="text" id="cdIn" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="16" placeholder="เช่น K7M2Q9XB4P" style="letter-spacing:2px;text-transform:uppercase"></label>
-  <div><button class="btn pri" id="cdGo">เข้าใช้งาน</button></div><div id="cdMsg" class="note" role="status">${esc(S.codeNote||'')}</div>
-  <hr style="border:0;border-top:1px solid var(--line,#444);width:100%">
-  <h2>เข้าสู่ระบบด้วยอีเมล</h2>
+function loginGate(){return `<div class="card stack gatehero">
+  <div class="logo">🔑</div><h2 style="text-align:center">เข้าด้วยรหัส</h2>
+  <div class="note" style="text-align:center">ครูและ อสม. ใส่รหัสที่เจ้าหน้าที่แจกให้ ไม่ต้องสมัครสมาชิกและไม่ต้องใช้อีเมล</div>
+  <input type="text" id="cdIn" class="codein" aria-label="รหัสเข้าใช้งาน" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="16" placeholder="รหัส 10 ตัว">
+  <button class="btn pri xl block" id="cdGo">เข้าใช้งาน</button><div id="cdMsg" class="note" role="status" style="text-align:center">${esc(S.codeNote||'')}</div></div>
+  <div class="card stack gatehero"><details class="stack" ${S.loginNote?'open':''}><summary style="cursor:pointer;font-weight:600;min-height:44px;display:flex;align-items:center">👩‍⚕️ เจ้าหน้าที่เข้าสู่ระบบ (อีเมล / รหัสผ่าน)</summary>
+  <h3>เข้าด้วยลิงก์ทางอีเมล</h3>
   <div class="note">กรอกอีเมลที่เจ้าหน้าที่ลงทะเบียนไว้ ระบบจะส่งลิงก์เข้าสู่ระบบไปให้ทางอีเมล (ไม่ต้องใช้รหัสผ่าน) เปิดลิงก์บนเครื่องนี้เพื่อเข้าใช้งาน</div>
   <label class="f" style="flex:none">อีเมล<input type="text" id="lgEmail" inputmode="email" autocomplete="email" placeholder="name@example.com"></label>
   <div><button class="btn pri" id="lgGo">ส่งลิงก์เข้าสู่ระบบ</button></div><div id="lgMsg" class="note" role="status">${esc(S.loginNote||'')}</div>
@@ -688,7 +776,7 @@ function loginGate(){return gateCard(`<h2>เข้าด้วยรหัส (
     <label class="f" style="flex:none">รหัสผ่าน<input type="password" id="pwPass" autocomplete="current-password"></label>
     <div><button class="btn" id="pwGo">เข้าสู่ระบบด้วยรหัสผ่าน</button></div><div id="pwMsg" class="note" role="status"></div>
     <div class="note">ใช้ได้เฉพาะบัญชีเจ้าหน้าที่ที่ตั้งรหัสผ่านไว้แล้ว ถ้ายังไม่เคยตั้ง ให้เข้าด้วยลิงก์อีเมลก่อน แล้วกด "ตั้งรหัสผ่าน" มุมขวาบน</div>
-  </details>`)}
+  </details></details></div>`}
 function noAccessGate(why){return gateCard(`<h2>ยังไม่ได้รับสิทธิ์ใช้งาน</h2>
   <div class="note">บัญชีนี้ล็อกอินได้ แต่ยังไม่ได้กำหนดบทบาท หรือถูกปิดการใช้งาน กรุณาแจ้งเจ้าหน้าที่ผู้ดูแลระบบ${why?'<br>('+esc(why)+')':''}</div>
   <div><button class="btn" data-logout="1">ออกจากระบบ</button></div>`)}
@@ -826,6 +914,7 @@ function pvCard(){
   <div><b>${k==='asm'?'อสม. — เลือกหมู่บ้านที่ต้องการดู':'ครู — เลือกโรงเรียนที่ต้องการดู (ทุกชั้น)'}</b></div>
   <div class="row">${chips}</div></div>`}
 function bindPv(){
+  const pg=$('#pvGo');if(pg)pg.onclick=()=>{const c=$('#pvCard');if(c)c.scrollIntoView({behavior:'smooth',block:'start'})};
   document.querySelectorAll('[data-pvk]').forEach(b=>b.onclick=()=>{S.pvKind=b.dataset.pvk;render()});
   document.querySelectorAll('[data-pvs]').forEach(b=>b.onclick=()=>startPreview('teacher',b.dataset.pvs,''));
   document.querySelectorAll('[data-pvv]').forEach(b=>b.onclick=()=>startPreview('asm','',b.dataset.pvv))}
@@ -850,7 +939,7 @@ async function exitPreview(){
   const {data}=await sb.auth.getSession();await handleSession(data.session);S.tab='codes';render()}
 
 /* ---------- เจ้าหน้าที่: Audit Log (ประวัติการใช้งาน อ่านอย่างเดียว) ---------- */
-S.audit=null;S.auditFilter={tbl:'',op:''};
+S.audit=null;S.auditFilter={tbl:'',op:'',q:'',d:''};
 async function loadAudit(){
   const [a,u]=await Promise.all([
     sb.from('audit_log').select('id,at,user_id,tbl,row_id,op').order('at',{ascending:false}).limit(500),
@@ -870,11 +959,15 @@ function audWhat(r){
 function viewAudit(){
   if(S.audit===null){loadAudit();return '<div class="empty">กำลังโหลด…</div>'}
   const f=S.auditFilter;
-  const rows=S.audit.filter(r=>(!f.tbl||r.tbl===f.tbl)&&(!f.op||(f.op==='SAVE'?r.op.startsWith('SAVE'):r.op===f.op)));
+  const dayOf=r=>new Date(r.at).toLocaleDateString('en-CA',{timeZone:'Asia/Bangkok'});
+  const ql=(f.q||'').trim().toLowerCase();
+  const rows=S.audit.filter(r=>(!f.tbl||r.tbl===f.tbl)&&(!f.op||(f.op==='SAVE'?r.op.startsWith('SAVE'):r.op===f.op))&&(!f.d||dayOf(r)===f.d)&&(!ql||(audWho(r)+' '+audWhat(r)).toLowerCase().includes(ql)));
   return `<div class="stack"><div class="card stack"><h2>Audit Log</h2>
   <div class="note">บันทึกว่าใครทำอะไรเมื่อไร (เพิ่ม/แก้ไข/ลบ ข้อมูลนักเรียน แบบประเมิน การติดตาม และการบันทึกผ่านรหัสห้อง) อ่านได้อย่างเดียว แก้ไขหรือลบไม่ได้ ไม่เก็บเนื้อหาข้อมูลส่วนบุคคล แสดง 500 รายการล่าสุด</div>
   <div class="row"><select id="auTbl"><option value="">ทุกประเภท</option>${Object.keys(AUD_TBL).map(k=>`<option value="${k}" ${f.tbl===k?'selected':''}>${AUD_TBL[k]}</option>`).join('')}</select>
   <select id="auOp"><option value="">ทุกการกระทำ</option>${[['INSERT','เพิ่ม'],['UPDATE','แก้ไข'],['DELETE','ลบ'],['SAVE','บันทึกผ่านรหัสห้อง']].map(([k,v])=>`<option value="${k}" ${f.op===k?'selected':''}>${v}</option>`).join('')}</select>
+  <input type="date" id="auD" aria-label="วันที่" value="${esc(f.d||'')}" style="max-width:190px">
+  <input type="search" id="auQ" aria-label="ค้นหา" placeholder="🔍 ค้นหาชื่อ/รายการ" value="${esc(f.q||'')}" style="max-width:260px">
   <button class="btn sm" id="auRef">รีเฟรช</button></div>
   <div class="note">แสดง ${rows.length} จาก ${S.audit.length} รายการ</div>
   <div class="tblw"><table><thead><tr><th>เวลา</th><th>ผู้ทำ</th><th>ประเภท</th><th>รายการ</th></tr></thead><tbody>${rows.map(r=>`<tr><td class="nw">${new Date(r.at).toLocaleString('th-TH',{dateStyle:'short',timeStyle:'medium'})}</td><td>${esc(audWho(r))}</td><td>${esc(AUD_TBL[r.tbl]||r.tbl)}</td><td>${esc(audWhat(r))}</td></tr>`).join('')||'<tr><td colspan="4" class="empty">ไม่มีรายการ</td></tr>'}</tbody></table></div></div></div>`}
@@ -882,6 +975,8 @@ function bindAudit(){
   if(!$('#auTbl'))return;
   $('#auTbl').onchange=e=>{S.auditFilter.tbl=e.target.value;render()};
   $('#auOp').onchange=e=>{S.auditFilter.op=e.target.value;render()};
+  $('#auD').onchange=e=>{S.auditFilter.d=e.target.value;render()};
+  $('#auQ').onchange=e=>{S.auditFilter.q=e.target.value;render();const q=$('#auQ');if(q){q.focus();q.setSelectionRange(q.value.length,q.value.length)}};
   $('#auRef').onclick=()=>{S.audit=null;render()}}
 /* ---------- เจ้าหน้าที่: จัดการรหัสห้อง ---------- */
 const CODE_ALPHA='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // 32 ตัว ไม่มี I O 0 1 สับสนง่าย
@@ -902,8 +997,8 @@ function viewCodes(){
   const now=Date.now(),asm=sel.kind==='asm';
   const vCount={};all.forEach(x=>{if(x.village)vCount[x.village]=(vCount[x.village]||0)+1});
   const noVillage=all.filter(x=>!x.village).length;
-  let h=`<div class="stack"><div class="card stack"><h2>สร้างรหัสเข้าใช้งาน</h2>
-  <div class="note">รหัสให้ครูหรือ อสม. เข้ากรอกแบบประเมินได้โดยไม่ต้องสมัครสมาชิก <b>รหัสครู</b> (ต่อโรงเรียนหรือชั้น) เห็นรายชื่อและผลของเด็กในขอบเขตนั้น <b>รหัส อสม.</b> (ต่อหมู่บ้าน) เห็นเฉพาะรายชื่อเด็กในหมู่บ้านนั้น ไม่เห็นคำตอบของใคร ระบบเก็บเฉพาะค่าแฮชของรหัส จึง<b>เห็นรหัสได้ครั้งเดียวตอนสร้าง</b> ต้องคัดลอกส่งทันที ถ้าหายให้ปิดรหัสเก่าแล้วสร้างใหม่</div>
+  let h=`<div class="stack"><div class="card stack"><div class="row" style="justify-content:space-between;align-items:center"><h2>สร้างรหัสเข้าใช้งาน</h2><button class="btn sm" id="pvGo">🔍 ทดลองดูหน้าเว็บ</button></div>
+  <details class="more"><summary>วิธีการทำงานของรหัส (อ่านก่อนสร้าง)</summary><div class="note">รหัสให้ครูหรือ อสม. เข้ากรอกแบบประเมินได้โดยไม่ต้องสมัครสมาชิก <b>รหัสครู</b> (ต่อโรงเรียนหรือชั้น) เห็นรายชื่อและผลของเด็กในขอบเขตนั้น <b>รหัส อสม.</b> (ต่อหมู่บ้าน) เห็นเฉพาะรายชื่อเด็กในหมู่บ้านนั้น ไม่เห็นคำตอบของใคร ระบบเก็บเฉพาะค่าแฮชของรหัส จึง<b>เห็นรหัสได้ครั้งเดียวตอนสร้าง</b> ต้องคัดลอกส่งทันที ถ้าหายให้ปิดรหัสเก่าแล้วสร้างใหม่</div></details>
   <div class="row"><label class="f" style="flex-basis:190px">สำหรับ<select id="cdKind"><option value="teacher" ${!asm?'selected':''}>ครูประจำชั้น (ต่อโรงเรียน/ชั้น)</option><option value="asm" ${asm?'selected':''}>อสม. (ต่อหมู่บ้าน)</option></select></label>
   ${asm?`<label class="f" style="flex-basis:240px">หมู่บ้าน<select id="cdVillage">${Object.keys(VILLAGES).map(k=>`<option value="${k}" ${sel.village===k?'selected':''}>${esc(vName(k))} (${vCount[k]||0} คน)</option>`).join('')}</select></label>`
   :`<label class="f" style="flex-basis:220px">โรงเรียน<select id="cdSchool">${schools.map(x=>`<option ${sel.school===x?'selected':''}>${esc(x)}</option>`).join('')}</select></label>
@@ -920,7 +1015,7 @@ function viewCodes(){
   <div class="note">รหัสนี้จะไม่แสดงอีกหลังซ่อน หมดอายุ ${new Date(n.exp).toLocaleDateString('th-TH')}</div></div>`}
   const scopeOf=c=>c.kind==='asm'?[vName(c.village),'-']:[c.school,c.grade==='*'?'ทุกชั้น':c.grade];
   h+=`<div class="card stack"><h2>รหัสที่สร้างไว้</h2><div class="tblw"><table><thead><tr><th>โรงเรียน / หมู่บ้าน</th><th>ชั้น</th><th>สำหรับ</th><th>หมดอายุ</th><th>ใช้ล่าสุด</th><th>สถานะ</th><th></th></tr></thead><tbody>
-  ${(S.codes||[]).map(c=>{const exp=new Date(c.expires_at).getTime()<now;const st=!c.active?['ปิดแล้ว','p-mute']:exp?['หมดอายุ','p-mute']:['ใช้งานได้','p-ok'];const sc=scopeOf(c);
+  ${(S.codes||[]).map(c=>{const exp=new Date(c.expires_at).getTime()<now;const st=!c.active?['ปิดแล้ว','p-mute']:exp?['หมดอายุ','p-warn']:['ใช้งานได้','p-ok'];const sc=scopeOf(c);
    return `<tr><td>${esc(sc[0])}</td><td>${esc(sc[1])}</td><td>${c.kind==='teacher'?'ครู':c.kind==='asm'?'อสม.':'ผู้ปกครอง'}</td><td class="nw">${new Date(c.expires_at).toLocaleDateString('th-TH')}</td><td class="nw">${c.last_used_at?new Date(c.last_used_at).toLocaleString('th-TH',{dateStyle:'short',timeStyle:'short'}):'-'}</td>
    <td><span class="pill ${st[1]}">${st[0]}</span></td><td><button class="btn sm" data-cdtoggle="${c.id}" data-on="${c.active?1:0}">${c.active?'ปิดรหัส':'เปิดรหัส'}</button> <button class="btn sm" data-cddel="${c.id}">ลบ</button></td></tr>`}).join('')||'<tr><td colspan="7" class="muted">ยังไม่มีรหัส</td></tr>'}
   </tbody></table></div></div></div>`;
