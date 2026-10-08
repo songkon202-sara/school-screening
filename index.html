@@ -161,7 +161,7 @@ details.more>summary::before{content:'ⓘ';margin-right:8px}
 .pcard{border:1.5px solid var(--line);border-radius:14px;padding:14px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px;background:#fff;color:#111}
 .pcard .pt{font-weight:700;font-size:17px;line-height:1.3}
 .pcard .pq{width:100%;max-width:200px;background:#fff}.pcard .pq svg{display:block;width:100%;height:auto}
-.pcard .pc{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:24px;font-weight:700;letter-spacing:3px}
+.pcard .pc{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:24px;font-weight:700;letter-spacing:0;word-spacing:0;user-select:all;-webkit-user-select:all}
 .pcard .pn{font-size:13px;color:#444;line-height:1.4;word-break:break-all}
 @media print{
   body.pb{background:#fff;padding:0}
@@ -841,7 +841,7 @@ function gateCard(inner){return `<div class="card stack" style="max-width:520px;
 function loginGate(){return `<div class="card stack gatehero">
   <div class="logo">🔑</div><h2 style="text-align:center">เข้าด้วยรหัส</h2>
   <div class="note" style="text-align:center">ครู อสม. และเจ้าหน้าที่ ใส่รหัสที่ผู้ดูแลระบบแจกให้ ไม่ต้องสมัครสมาชิกและไม่ต้องใช้อีเมล</div>
-  <input type="text" id="cdIn" class="codein" aria-label="รหัสเข้าใช้งาน" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="16" placeholder="รหัส 10 ตัว">
+  <input type="text" id="cdIn" class="codein" aria-label="รหัสเข้าใช้งาน" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="รหัส 10 ตัว">
   <button class="btn pri xl block" id="cdGo">เข้าใช้งาน</button><div id="cdMsg" class="note" role="status" style="text-align:center">${esc(S.codeNote||'')}</div></div>
   <div class="card stack gatehero"><details class="stack" ${S.loginNote?'open':''}><summary style="cursor:pointer;font-weight:600;min-height:44px;display:flex;align-items:center">🛡️ ผู้ดูแลระบบเข้าสู่ระบบ</summary>
 
@@ -858,12 +858,14 @@ function setupGate(){return gateCard(`<h2>ยังไม่ได้ตั้�
 function bindGate(){
   const cg=$('#cdGo');
   if(cg){const cdSend=async()=>{
-    const code=$('#cdIn').value.trim(),m=$('#cdMsg');
-    if(code.length<6){m.textContent='กรุณาใส่รหัส';return}
+    const code=$('#cdIn').value.replace(/[^A-Za-z0-9]/g,'').toUpperCase(),m=$('#cdMsg');
+    if(!code){m.textContent='กรุณาใส่รหัส';return}
+    if(code.length!==10){m.textContent='รหัสต้องมี 10 ตัว ตอนนี้มี '+code.length+' ตัว กรุณาพิมพ์หรือวางให้ครบ (ยังไม่ได้ส่งตรวจ)';return}
     cg.disabled=true;m.textContent='กำลังตรวจรหัส…';
     const r=await enterCode(code);
     cg.disabled=false;if(r)m.textContent=r};
-    cg.onclick=cdSend;$('#cdIn').onkeydown=e=>{if(e.key==='Enter')cdSend()}}
+    cg.onclick=cdSend;$('#cdIn').onkeydown=e=>{if(e.key==='Enter')cdSend()};
+    $('#cdIn').oninput=()=>{const el=$('#cdIn'),cl=el.value.replace(/[^A-Za-z0-9]/g,'').toUpperCase().slice(0,10);if(el.value!==cl)el.value=cl;const n=cl.length,m=$('#cdMsg');m.textContent=n===0?'':n===10?'ครบ 10 ตัว ✓':'พิมพ์แล้ว '+n+'/10 ตัว'}}
   const lk=$('#pwLink');
   if(lk)lk.onclick=async()=>{
     const email=$('#pwEmail').value.trim().toLowerCase(),msg=$('#pwMsg');
@@ -1175,6 +1177,7 @@ function bindQr(){
     S.qrRegen=false;
     S.newBatch=made.map(m=>({code:m.code,title:m.it.title,exp,link:APPURL()+'#c='+m.code}));
     toast('สร้าง '+made.length+' รหัสแล้ว');await loadCodes();render();window.scrollTo(0,0)};
+  document.querySelectorAll('[data-cpcode]').forEach(b=>b.onclick=async()=>{try{await navigator.clipboard.writeText(b.dataset.cpcode);toast('คัดลอกรหัส '+b.dataset.cpcode+' ครบ 10 ตัวแล้ว')}catch(e){toast('คัดลอกไม่ได้ กรุณาพิมพ์รหัสเอง')}});
   const bp=$('#bhPrint');if(bp)bp.onclick=()=>{document.body.classList.add('pb');const off=()=>{document.body.classList.remove('pb');window.removeEventListener('afterprint',off)};window.addEventListener('afterprint',off);try{window.print()}catch(e){off();toast('พิมพ์ไม่ได้ ลองกด Ctrl/Cmd+P')}};
   const bd=$('#bhDone');if(bd)bd.onclick=()=>{S.newBatch=null;render()};
 }
@@ -1192,7 +1195,7 @@ function expPicker(id,val){return `<label class="f" style="flex-basis:170px;flex
 function bindExp(onset){document.querySelectorAll('[data-expd]').forEach(b=>b.onclick=()=>{const e=$('#'+b.dataset.for);if(e){e.value=addDays(+b.dataset.expd);onset(e.value)}})}
 function qrSvg(t){try{if(!window.qrcode)return '';const q=qrcode(0,'M');q.addData(t);q.make();return q.createSvgTag(4,2)}catch(e){return ''}}
 const APPURL=()=>location.origin+location.pathname;
-function pcard(n){return `<div class="pcard"><div class="pt">${esc(n.title)}</div><div class="pq">${qrSvg(n.link)||'<div class="note">สร้าง QR ไม่ได้ (ไม่มีอินเทอร์เน็ต)</div>'}</div><div class="pc">${esc(n.code)}</div><div class="pn">สแกน QR หรือพิมพ์รหัสที่<br>${esc(APPURL())}<br>หมดอายุ ${new Date(n.exp).toLocaleDateString('th-TH')}</div></div>`}
+function pcard(n){return `<div class="pcard"><div class="pt">${esc(n.title)}</div><div class="pq">${qrSvg(n.link)||'<div class="note">สร้าง QR ไม่ได้ (ไม่มีอินเทอร์เน็ต)</div>'}</div><div class="pc">${esc(n.code)}</div><button type="button" class="btn sm noprint" data-cpcode="${esc(n.code)}">📋 คัดลอกรหัส</button><div class="pn">สแกน QR หรือพิมพ์รหัสที่<br>${esc(APPURL())}<br>หมดอายุ ${new Date(n.exp).toLocaleDateString('th-TH')}</div></div>`}
 function batchPlan(regen){
   const all=Object.keys(S.students).map(i=>S.students[i]);
   const schools=[...new Set(all.map(x=>x.school).filter(Boolean))].sort(natSort);
