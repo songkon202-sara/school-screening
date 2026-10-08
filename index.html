@@ -906,7 +906,7 @@ let pwLogin=false;
 let codeCtx=null;
 function sessGet(k){try{return sessionStorage.getItem(k)||''}catch(e){return ''}}
 function sessSet(k,v){try{if(v)sessionStorage.setItem(k,v);else sessionStorage.removeItem(k)}catch(e){}}
-const CODE_ERR={invalid:'รหัสไม่ถูกต้อง หรือหมดอายุแล้ว กรุณาตรวจรหัสหรือแจ้งเจ้าหน้าที่',locked:'ใส่รหัสผิดหลายครั้ง ระบบล็อกชั่วคราว กรุณารอ 10 นาทีแล้วลองใหม่',
+const CODE_ERR={invalid:'รหัสไม่ถูกต้อง หรือหมดอายุแล้ว กรุณาตรวจรหัสหรือแจ้งเจ้าหน้าที่',locked:'ใส่รหัสผิดหลายครั้ง ระบบล็อกชั่วคราว กรุณารอ 1 นาทีแล้วลองใหม่',
   forbidden_type:'รหัสนี้ไม่มีสิทธิ์บันทึกแบบประเมินชนิดนี้',forbidden_student:'รหัสนี้ไม่มีสิทธิ์บันทึกให้เด็กคนนี้',bad_data:'ข้อมูลไม่ครบหรือไม่ถูกต้อง'};
 function codeErr(r){const x=new Error((r&&r.error)||'error');x.code=CODE_ERR[r&&r.error]||'ไม่ทราบสาเหตุ';x.fatal=!!(r&&(r.error==='invalid'||r.error==='locked'));return x}
 async function codeCall(fn,args){
