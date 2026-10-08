@@ -122,6 +122,7 @@ tbody tr:hover{background:var(--bg)}
 .opts label{position:relative;cursor:pointer}
 .opts input{position:absolute;opacity:0;inset:0}
 .opts span{display:flex;align-items:center;justify-content:center;min-width:64px;min-height:44px;padding:6px 16px;border:1.5px solid var(--line);border-radius:12px;font-size:16px;background:var(--bg);user-select:none;transition:background .1s}
+.allrow{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between;padding:12px 16px;border-top:1px solid var(--line);background:var(--bg)}.allrow .l{flex:1 1 300px;min-width:0;font-size:15px;color:var(--muted)}.allrow .opts button{min-width:64px;min-height:44px;padding:6px 16px;border:1.5px dashed var(--accent);border-radius:12px;font-size:16px;line-height:inherit;background:transparent;color:var(--accent);cursor:pointer;font-family:inherit;font-weight:400}.allrow .opts button.arm{background:var(--accent);color:var(--accent-ink);border-style:solid}
 .opts input:checked+span{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
 .opts input:focus-visible+span{outline:3px solid var(--info);outline-offset:2px}
 .res{border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
@@ -189,7 +190,7 @@ details.more>summary::before{content:'ⓘ';margin-right:8px}
   nav.tabs button[aria-selected="true"]{background:var(--accent-soft);color:var(--accent);border-bottom:0}
   .savebar{bottom:calc(68px + env(safe-area-inset-bottom,0px))}
   .toast{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
-  .q{flex-direction:column;align-items:stretch}.q .opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr))}
+  .q,.allrow{flex-direction:column;align-items:stretch}.q .opts,.allrow .opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr))}.allrow .opts button{min-width:0;padding:6px 8px}
   .opts span{min-width:0;padding:6px 8px}
   .stlist{grid-template-columns:1fr}
   table.rt thead{display:none}
@@ -703,14 +704,14 @@ function viewForm(){
   h+=`<div class="pbar"><div class="row" style="justify-content:space-between;align-items:baseline"><b id="pbTxt"></b><span class="note" id="pbSub"></span></div><div class="bar"><i id="pbFill" style="width:0;background:var(--accent)"></i></div><div class="row" id="pbPills"></div></div>`;
   if(isObsTab(S.tab)){
     let fo=OBS.findIndex((s,si)=>D.answers.slice(si*10,si*10+10).some(v=>v===null));if(fo<0)fo=0;
-    OBS.forEach((s,si)=>{h+=`<details class="sec" ${si===fo?'open':''}><summary><span>${s.title}</span><span class="pill p-mute" id="sc_${s.key}"></span></summary>`;
+    OBS.forEach((s,si)=>{h+=`<details class="sec" ${si===fo?'open':''}><summary><span>${s.title}</span><span class="pill p-mute" id="sc_${s.key}"></span></summary><div class="allrow"><span class="l">ตอบทุกข้อในหมวดนี้ (${s.items.length} ข้อ) →</span><div class="opts"><button type="button" data-all="${si*10}:${s.items.length}:1" ${S.canWrite===false?'disabled':''}>ใช่</button><button type="button" data-all="${si*10}:${s.items.length}:0" ${S.canWrite===false?'disabled':''}>ไม่ใช่</button></div></div>`;
       s.items.forEach((t,k)=>{const n=si*10+k;h+=`<div class="q"><div class="t"><em>${s.from+k}.</em>${esc(t)}</div><div class="opts">
        <label><input type="radio" name="q${n}" value="1" ${D.answers[n]===1?'checked':''}><span>ใช่</span></label>
        <label><input type="radio" name="q${n}" value="0" ${D.answers[n]===0?'checked':''}><span>ไม่ใช่</span></label></div></div>`});h+='</details>'});
   }else{
     let off=0;const who=S.tab==='snapT'?'T':'P';
     let so=0,fo=-1;SNAP.forEach((s,si)=>{if(fo<0&&D.answers.slice(so,so+s.items.length).some(v=>v===null))fo=si;so+=s.items.length});if(fo<0)fo=0;
-    SNAP.forEach((s,si)=>{h+=`<details class="sec" ${si===fo?'open':''}><summary><span>${s.title}</span><span class="pill p-mute" id="sc_${s.key}"></span></summary>`;
+    SNAP.forEach((s,si)=>{h+=`<details class="sec" ${si===fo?'open':''}><summary><span>${s.title}</span><span class="pill p-mute" id="sc_${s.key}"></span></summary><div class="allrow"><span class="l">ตอบทุกข้อในหมวดนี้ (${s.items.length} ข้อ) →</span><div class="opts">${SNAP_OPTS.map((o,v)=>`<button type="button" data-all="${off}:${s.items.length}:${v}" ${S.canWrite===false?'disabled':''}>${o}</button>`).join('')}</div></div>`;
       s.items.forEach((t,k)=>{const n=off+k;h+=`<div class="q"><div class="t"><em>${n+1}.</em>${esc(t)}</div><div class="opts">${SNAP_OPTS.map((o,v)=>`<label><input type="radio" name="q${n}" value="${v}" ${D.answers[n]===v?'checked':''}><span>${o}</span></label>`).join('')}</div></div>`});
       off+=s.items.length;h+='</details>'});
   }
@@ -752,6 +753,13 @@ function bindForm(){
   if(!S.sid)return;
   const D=S.draft;
   document.querySelectorAll('input[type=radio]').forEach(r=>r.onchange=()=>{D.answers[+r.name.slice(1)]=+r.value;liveResult()});
+  document.querySelectorAll('[data-all]').forEach(b=>b.onclick=()=>{
+    const [st,len,val]=b.dataset.all.split(':').map(Number);
+    const needSure=isObsTab(S.tab)&&val===1;
+    if(needSure&&!b.classList.contains('arm')){document.querySelectorAll('[data-all].arm').forEach(x=>{x.classList.remove('arm');x.textContent=x.dataset.t});b.dataset.t=b.textContent;b.classList.add('arm');b.textContent='กดอีกครั้งเพื่อยืนยัน';setTimeout(()=>{if(b.classList.contains('arm')){b.classList.remove('arm');b.textContent=b.dataset.t}},4000);return}
+    for(let i=st;i<st+len;i++){D.answers[i]=val;const r=document.querySelector('input[name=q'+i+'][value="'+val+'"]');if(r)r.checked=true}
+    if(b.dataset.t){b.classList.remove('arm');b.textContent=b.dataset.t}
+    liveResult();toast('เลือกทั้งหมวดแล้ว ตรวจรายข้อก่อนบันทึก')});
   const bind=(id,k)=>{const e=$(id);if(e)e.oninput=e.onchange=()=>D[k]=e.value};
   bind('#resp','respondent');bind('#dt','date');bind('#gat','gradeAt');bind('#rel','rel');bind('#avg','avg');
   $('#saveForm').onclick=saveForm;liveResult();
