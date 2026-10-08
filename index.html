@@ -1001,8 +1001,9 @@ async function enterCode(code,quiet){
   subsOff.push(db.collection('screenings').onSnapshot(s=>{S.shots=snapToMap(s);hit()},err));
   subsOff.push(db.collection('actions').onSnapshot(s=>{S.actions=snapToMap(s);hit()},err));
   render();return ''}
+function clearUrlCode(){try{if(/[#&]c=/.test(location.hash))history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
 async function exitCode(note){
-  stopSubs();codeCtx=null;sessSet('sk_code','');curUid=undefined;
+  clearUrlCode();stopSubs();codeCtx=null;sessSet('sk_code','');curUid=undefined;
   S.students={};S.shots={};S.actions={};S.sid='';S.draft=null;S.school='';S.grade='';S.me=null;S.codeNote=note||'';
   const {data}=await sb.auth.getSession();handleSession(data.session)}
 
@@ -1404,11 +1405,11 @@ async function handleSession(session){
 (async()=>{
   S.ready=false;render();
   if(!CFG.SUPABASE_URL||!CFG.SUPABASE_ANON_KEY||!window.supabase){S.gate=setupGate();S.ready=true;render();return}
-  let urlCode='';try{const m=location.hash.match(/[#&]c=([A-Za-z0-9]{6,16})/);if(m){urlCode=m[1];history.replaceState(null,'',location.pathname+location.search)}}catch(e){}
+  let urlCode='';try{const m=location.hash.match(/[#&]c=([A-Za-z0-9]{6,16})/);if(m)urlCode=m[1]}catch(e){}
   sb=window.supabase.createClient(CFG.SUPABASE_URL,CFG.SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
   sb.auth.onAuthStateChange((evt,session)=>{handleSession(session)});
   const savedCode=urlCode||sessGet('sk_code');
-  if(savedCode){const r=await enterCode(savedCode,true);if(!r)return;S.codeNote=r}
+  if(savedCode){const r=await enterCode(savedCode,true);if(!r)return;clearUrlCode();S.codeNote=r}
   const {data}=await sb.auth.getSession();handleSession(data.session);
 })();
 </script>
