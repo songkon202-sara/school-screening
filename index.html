@@ -842,7 +842,8 @@ function loginGate(){return `<div class="card stack gatehero">
   <div class="logo">🔑</div><h2 style="text-align:center">เข้าด้วยรหัส</h2>
   <div class="note" style="text-align:center">ครู อสม. และเจ้าหน้าที่ ใส่รหัสที่ผู้ดูแลระบบแจกให้ ไม่ต้องสมัครสมาชิกและไม่ต้องใช้อีเมล</div>
   <input type="text" id="cdIn" class="codein" aria-label="รหัสเข้าใช้งาน" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="รหัส 10 ตัว">
-  <button class="btn pri xl block" id="cdGo">เข้าใช้งาน</button><div id="cdMsg" class="note" role="status" style="text-align:center">${esc(S.codeNote||'')}</div></div>
+  <button class="btn pri xl block" id="cdGo">เข้าใช้งาน</button>
+  <button class="btn xl block" id="cdScan" type="button">📷 สแกน QR</button><div id="cdMsg" class="note" role="status" style="text-align:center">${esc(S.codeNote||'')}</div></div>
   <div class="card stack gatehero"><details class="stack" ${S.loginNote?'open':''}><summary style="cursor:pointer;font-weight:600;min-height:44px;display:flex;align-items:center">🛡️ ผู้ดูแลระบบเข้าสู่ระบบ</summary>
 
     <label class="f" style="flex:none">อีเมล<input type="text" id="pwEmail" inputmode="email" autocomplete="username" placeholder="name@example.com"></label>
@@ -855,6 +856,39 @@ function noAccessGate(why,email){return gateCard(`<h2>บัญชีนี้�
   <div><button class="btn" data-logout="1">ออกจากระบบ</button></div>`)}
 function setupGate(){return gateCard(`<h2>ยังไม่ได้ตั้งค่าการเชื่อมต่อ</h2>
   <div class="note">เปิดไฟล์ config.js แล้วใส่ SUPABASE_URL และ SUPABASE_ANON_KEY ของโปรเจกต์ Supabase (ดูขั้นตอนในคู่มือ)</div>`)}
+/* สแกน QR ด้วยกล้อง (ใช้ jsQR โหลดเมื่อกดปุ่มเท่านั้น) */
+let _jsqrP=null;
+function loadJsQR(){if(window.jsQR)return Promise.resolve();
+  if(!_jsqrP)_jsqrP=new Promise((ok,no)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js';s.onload=()=>window.jsQR?ok():no(new Error('x'));s.onerror=()=>{_jsqrP=null;no(new Error('load'))};document.head.appendChild(s)});
+  return _jsqrP}
+function codeFromScan(txt){txt=String(txt||'');
+  let m=txt.match(/[#&?]c=([A-Za-z0-9]{10})(?![A-Za-z0-9])/);if(m)return m[1].toUpperCase();
+  const t=txt.replace(/[^A-Za-z0-9]/g,'');if(t.length===10)return t.toUpperCase();return ''}
+async function openScan(onCode,onMsg){
+  const inLine=/Line\//i.test(navigator.userAgent);
+  const hint=inLine?' (ถ้าใช้ในแอป LINE ให้กดเมนู ⋯ แล้วเลือก "เปิดใน Safari" หรือ "เปิดในเบราว์เซอร์" แล้วลองใหม่ หรือพิมพ์รหัสเอง)':' (หรือพิมพ์รหัสเอง)';
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia||!window.isSecureContext){onMsg('เบราว์เซอร์นี้เปิดกล้องไม่ได้'+hint);return}
+  const ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;z-index:9999;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px';
+  ov.innerHTML='<div id="scTxt" style="color:#fff;font-size:18px;text-align:center">กำลังเปิดกล้อง…</div><video id="scV" playsinline muted style="width:100%;max-width:420px;max-height:60vh;background:#222;border-radius:12px"></video><button class="btn xl" id="scX" type="button" style="min-width:160px">ปิดกล้อง</button>';
+  document.body.appendChild(ov);
+  const v=ov.querySelector('#scV'),tx=ov.querySelector('#scTxt');
+  let stream=null,alive=true;
+  const close=()=>{alive=false;try{stream&&stream.getTracks().forEach(t=>t.stop())}catch(e){}ov.remove()};
+  ov.querySelector('#scX').onclick=close;
+  try{await loadJsQR()}catch(e){close();onMsg('โหลดตัวสแกนไม่ได้ (ตรวจสัญญาณอินเทอร์เน็ต) กรุณาพิมพ์รหัสเอง หรือใช้กล้องมือถือสแกน QR');return}
+  try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false})}
+  catch(e){close();onMsg((e&&e.name==='NotAllowedError'?'ไม่ได้รับอนุญาตให้ใช้กล้อง กรุณาอนุญาตกล้องในการตั้งค่าเบราว์เซอร์':'เปิดกล้องไม่ได้')+hint);return}
+  if(!alive){stream.getTracks().forEach(t=>t.stop());return}
+  v.srcObject=stream;try{await v.play()}catch(e){}
+  tx.textContent='ส่องกล้องไปที่ QR บนใบรหัส';
+  const cv=document.createElement('canvas'),cx=cv.getContext('2d',{willReadFrequently:true});
+  const tick=()=>{if(!alive)return;
+    if(v.readyState>=2&&v.videoWidth){const w=Math.min(640,v.videoWidth),h=Math.round(v.videoHeight*w/v.videoWidth);cv.width=w;cv.height=h;cx.drawImage(v,0,0,w,h);
+      try{const r=window.jsQR(cx.getImageData(0,0,w,h).data,w,h,{inversionAttempts:'dontInvert'});
+        if(r&&r.data){const c=codeFromScan(r.data);if(c){close();onCode(c);return}tx.textContent='QR นี้ไม่ใช่รหัสเข้าใช้งาน ลองใหม่'}}catch(e){}}
+    setTimeout(tick,150)};
+  tick()}
 function bindGate(){
   const cg=$('#cdGo');
   if(cg){const cdSend=async()=>{
@@ -866,6 +900,8 @@ function bindGate(){
     cg.disabled=false;if(r)m.textContent=r};
     cg.onclick=cdSend;$('#cdIn').onkeydown=e=>{if(e.key==='Enter')cdSend()};
     $('#cdIn').oninput=()=>{const el=$('#cdIn'),cl=el.value.replace(/[^A-Za-z0-9]/g,'').toUpperCase().slice(0,10);if(el.value!==cl)el.value=cl;const n=cl.length,m=$('#cdMsg');m.textContent=n===0?'':n===10?'ครบ 10 ตัว ✓':'พิมพ์แล้ว '+n+'/10 ตัว'}}
+  const sc=$('#cdScan');
+  if(sc)sc.onclick=()=>openScan(code=>{$('#cdIn').value=code;$('#cdMsg').textContent='สแกนได้แล้ว กำลังตรวจรหัส…';cg.click()},msg=>{$('#cdMsg').textContent=msg});
   const lk=$('#pwLink');
   if(lk)lk.onclick=async()=>{
     const email=$('#pwEmail').value.trim().toLowerCase(),msg=$('#pwMsg');
